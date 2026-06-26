@@ -1,0 +1,6 @@
+{
+  "name": "Student Attendance Tracker",
+  "description": "A modern and student-friendly dashboard for tracking subject-wise attendance, planning academic goals, and predicting future attendance percentages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
