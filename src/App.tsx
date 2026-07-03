@@ -11,6 +11,8 @@ import AnalyticsView from './components/AnalyticsView';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
 import AddSubjectModal from './components/AddSubjectModal';
+import EditSubjectModal from './components/EditSubjectModal';
+import SubjectDetailsView from './components/SubjectDetailsView';
 import AuthView from './components/AuthView';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -44,6 +46,11 @@ export default function App() {
   // Tab routing page state
   const [activePage, setActivePage] = useState('dashboard');
   const [isOpenMobile, setIsOpenMobile] = useState(false);
+
+  // Subject Management States
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [deletingSubject, setDeletingSubject] = useState<Subject | null>(null);
+  const [viewingSubjectId, setViewingSubjectId] = useState<string | null>(null);
   
   // Track chronological logs of recent activities during session
   const [activities, setActivities] = useState<Array<{ id: string; text: string; time: string }>>([
@@ -256,6 +263,94 @@ export default function App() {
     }
   };
 
+  const handleEditSubject = async (subjectId: string, name: string, attended: number, total: number, target: number) => {
+    try {
+      const res = await authenticatedFetch(`/api/subjects/${subjectId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name,
+          attended,
+          total,
+          targetPercentage: target,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.detail || 'Failed to update subject');
+      }
+
+      const updatedSub = await res.json();
+      setSubjects((prev) => prev.map((s) => s.id === subjectId ? updatedSub : s));
+
+      // Add to session activities feed
+      const newActivity = {
+        id: `act-${Date.now()}`,
+        text: `Updated subject details: ${name}`,
+        time: 'Just now',
+      };
+      setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
+
+      // Refresh overall stats and risk scores
+      const [statsRes, riskRes] = await Promise.all([
+        authenticatedFetch('/api/stats'),
+        authenticatedFetch('/api/attendance/risk')
+      ]);
+      if (statsRes.ok && riskRes.ok) {
+        const statsData = await statsRes.json();
+        const riskDataVal = await riskRes.json();
+        setStats(statsData);
+        setRiskData(riskDataVal);
+      }
+    } catch (err: any) {
+      console.error('Error editing subject:', err);
+      setError(err.message || 'Failed to update subject.');
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    if (!deletingSubject) return;
+    const subjectName = deletingSubject.name;
+    
+    try {
+      const res = await authenticatedFetch(`/api/subjects/${subjectId}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) throw new Error('Failed to delete subject');
+
+      setSubjects((prev) => prev.filter((s) => s.id !== subjectId));
+      setDeletingSubject(null);
+      if (viewingSubjectId === subjectId) {
+        setViewingSubjectId(null);
+        setActivePage('subjects');
+      }
+
+      // Add to session activities feed
+      const newActivity = {
+        id: `act-${Date.now()}`,
+        text: `Deleted subject: ${subjectName}`,
+        time: 'Just now',
+      };
+      setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
+
+      // Refresh overall stats and risk scores
+      const [statsRes, riskRes] = await Promise.all([
+        authenticatedFetch('/api/stats'),
+        authenticatedFetch('/api/attendance/risk')
+      ]);
+      if (statsRes.ok && riskRes.ok) {
+        const statsData = await statsRes.json();
+        const riskDataVal = await riskRes.json();
+        setStats(statsData);
+        setRiskData(riskDataVal);
+      }
+    } catch (err: any) {
+      console.error('Error deleting subject:', err);
+      setError(err.message || 'Failed to delete subject.');
+    }
+  };
+
   // Handler: Query prediction outcomes
   const handlePredict = async (
     subjectId: string,
@@ -330,11 +425,26 @@ export default function App() {
           />
         );
       case 'subjects':
+        if (viewingSubjectId) {
+          const sub = subjects.find(s => s.id === viewingSubjectId);
+          if (sub) {
+            return (
+              <SubjectDetailsView
+                subject={sub}
+                onBack={() => setViewingSubjectId(null)}
+                authenticatedFetch={authenticatedFetch}
+              />
+            );
+          }
+        }
         return (
           <SubjectsView
             subjects={subjects}
             onLogAttendance={handleLogAttendance}
             onAddSubject={() => setIsModalOpen(true)}
+            onEditSubject={(subject) => setEditingSubject(subject)}
+            onDeleteSubject={(subject) => setDeletingSubject(subject)}
+            onViewDetails={(subjectId) => { setViewingSubjectId(subjectId); setActivePage('subjects'); }}
           />
         );
       case 'predictor':
@@ -466,6 +576,44 @@ export default function App() {
         onClose={() => setIsModalOpen(false)}
         onAdd={handleAddSubject}
       />
+
+      {/* Edit Subject Modal Panel */}
+      <EditSubjectModal
+        isOpen={!!editingSubject}
+        subject={editingSubject}
+        onClose={() => setEditingSubject(null)}
+        onSave={handleEditSubject}
+      />
+
+      {/* Delete Confirmation Modal */}
+      {deletingSubject && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 w-full max-w-sm border border-slate-100 dark:border-[#334155] shadow-xl text-center">
+            <div className="w-16 h-16 bg-rose-50 dark:bg-rose-950/40 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-[#F8FAFC] mb-2">Delete Subject?</h3>
+            <p className="text-sm text-slate-500 dark:text-[#CBD5E1] mb-6">
+              Are you sure you want to delete <strong className="text-slate-700 dark:text-slate-200">{deletingSubject.name}</strong>? 
+              This will also permanently delete all attendance history associated with it. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeletingSubject(null)}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleDeleteSubject(deletingSubject.id)}
+                className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-sm transition-colors shadow-xs"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

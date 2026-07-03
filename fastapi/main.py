@@ -1,4 +1,5 @@
 import math
+from datetime import date
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -153,8 +154,16 @@ def get_subjects(db: Session = Depends(database.get_db), current_user: models.Us
 
 @app.post("/api/subjects")
 def create_subject(sub: schemas.SubjectCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    # Duplicate subject validation
+    existing = db.query(models.Subject).filter(
+        models.Subject.owner_id == current_user.id,
+        models.Subject.name == sub.name.strip()
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Subject '{sub.name}' already exists.")
+
     new_sub = models.Subject(
-        name=sub.name,
+        name=sub.name.strip(),
         attended=sub.attended,
         total=sub.total,
         target_percentage=sub.targetPercentage,
@@ -171,19 +180,71 @@ def create_subject(sub: schemas.SubjectCreate, db: Session = Depends(database.ge
         "targetPercentage": new_sub.target_percentage
     }
 
+@app.put("/api/subjects/{subject_id}")
+def update_subject(subject_id: str, update: schemas.SubjectUpdate, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    sub = db.query(models.Subject).filter(models.Subject.id == subject_id, models.Subject.owner_id == current_user.id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # Check duplicate name if name is being changed
+    if update.name is not None and update.name.strip() != sub.name:
+        existing = db.query(models.Subject).filter(
+            models.Subject.owner_id == current_user.id,
+            models.Subject.name == update.name.strip(),
+            models.Subject.id != subject_id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Subject '{update.name}' already exists.")
+        sub.name = update.name.strip()
+
+    if update.attended is not None:
+        sub.attended = update.attended
+    if update.total is not None:
+        sub.total = update.total
+    if update.targetPercentage is not None:
+        sub.target_percentage = update.targetPercentage
+
+    db.commit()
+    db.refresh(sub)
+    return {
+        "id": sub.id,
+        "name": sub.name,
+        "attended": sub.attended,
+        "total": sub.total,
+        "targetPercentage": sub.target_percentage
+    }
+
+@app.delete("/api/subjects/{subject_id}")
+def delete_subject(subject_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    sub = db.query(models.Subject).filter(models.Subject.id == subject_id, models.Subject.owner_id == current_user.id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    db.delete(sub)
+    db.commit()
+    return {"message": f"Subject '{sub.name}' deleted successfully"}
+
 @app.post("/api/attendance")
 def log_attendance(log: schemas.AttendanceLog, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
     sub = db.query(models.Subject).filter(models.Subject.id == log.subjectId, models.Subject.owner_id == current_user.id).first()
     if not sub:
         raise HTTPException(status_code=404, detail="Subject not found")
-        
+
     sub.total += 1
     if log.status == "present":
         sub.attended += 1
-        
+
+    # Create an attendance record for history tracking
+    record = models.AttendanceRecord(
+        subject_id=sub.id,
+        owner_id=current_user.id,
+        status=log.status,
+        date=date.today().isoformat()
+    )
+    db.add(record)
     db.commit()
     db.refresh(sub)
-    
+
     percentage = (sub.attended / sub.total * 100) if sub.total > 0 else 0.0
     return {
         "message": f"Logged {log.status} for {sub.name}",
@@ -196,6 +257,78 @@ def log_attendance(log: schemas.AttendanceLog, db: Session = Depends(database.ge
         },
         "currentPercentage": round(percentage, 2)
     }
+
+@app.put("/api/attendance/{record_id}")
+def update_attendance(record_id: str, update: schemas.AttendanceUpdate, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    record = db.query(models.AttendanceRecord).filter(models.AttendanceRecord.id == record_id, models.AttendanceRecord.owner_id == current_user.id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+
+    sub = db.query(models.Subject).filter(models.Subject.id == record.subject_id).first()
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subject not found")
+
+    # If status is changing, update the subject counts
+    if update.status is not None and update.status != record.status:
+        if record.status == "present" and update.status == "absent":
+            sub.attended -= 1
+        elif record.status == "absent" and update.status == "present":
+            sub.attended += 1
+        record.status = update.status
+
+    if update.notes is not None:
+        record.notes = update.notes
+
+    db.commit()
+    db.refresh(record)
+    db.refresh(sub)
+
+    return {
+        "id": record.id,
+        "subjectId": record.subject_id,
+        "subjectName": sub.name,
+        "status": record.status,
+        "date": record.date,
+        "notes": record.notes
+    }
+
+@app.delete("/api/attendance/{record_id}")
+def delete_attendance(record_id: str, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    record = db.query(models.AttendanceRecord).filter(models.AttendanceRecord.id == record_id, models.AttendanceRecord.owner_id == current_user.id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+
+    sub = db.query(models.Subject).filter(models.Subject.id == record.subject_id).first()
+    if sub:
+        sub.total -= 1
+        if record.status == "present":
+            sub.attended -= 1
+        # Ensure counts never go below 0
+        sub.total = max(0, sub.total)
+        sub.attended = max(0, sub.attended)
+
+    db.delete(record)
+    db.commit()
+    return {"message": "Attendance record deleted successfully"}
+
+@app.get("/api/attendance/history")
+def get_attendance_history(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    records = db.query(models.AttendanceRecord).filter(
+        models.AttendanceRecord.owner_id == current_user.id
+    ).order_by(models.AttendanceRecord.created_at.desc()).limit(100).all()
+
+    result = []
+    for r in records:
+        sub = db.query(models.Subject).filter(models.Subject.id == r.subject_id).first()
+        result.append({
+            "id": r.id,
+            "subjectId": r.subject_id,
+            "subjectName": sub.name if sub else "Deleted Subject",
+            "status": r.status,
+            "date": r.date,
+            "notes": r.notes
+        })
+    return result
 
 @app.post("/api/predict", response_model=schemas.PredictionResult)
 def predict_attendance(input_data: schemas.PredictionInput, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
@@ -368,10 +501,48 @@ def get_attendance_risk(db: Session = Depends(database.get_db), current_user: mo
 
 @app.post("/api/reset")
 def reset_data(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    db.query(models.AttendanceRecord).filter(models.AttendanceRecord.owner_id == current_user.id).delete()
     db.query(models.Subject).filter(models.Subject.owner_id == current_user.id).delete()
     seed_default_subjects(db, current_user)
     return {"message": "Database reset to defaults"}
 
+@app.get("/api/dashboard")
+def get_dashboard(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    subjects = db.query(models.Subject).filter(models.Subject.owner_id == current_user.id).all()
+
+    total_attended = sum(s.attended for s in subjects)
+    total_conducted = sum(s.total for s in subjects)
+    overall_percentage = (total_attended / total_conducted * 100.0) if total_conducted > 0 else 100.0
+    missed_classes = total_conducted - total_attended
+
+    safe_subjects = sum(1 for s in subjects if (s.attended / s.total * 100.0 if s.total > 0 else 100.0) >= s.target_percentage)
+
+    # Recent activity from attendance records
+    recent_records = db.query(models.AttendanceRecord).filter(
+        models.AttendanceRecord.owner_id == current_user.id
+    ).order_by(models.AttendanceRecord.created_at.desc()).limit(5).all()
+
+    recent_activity = []
+    for r in recent_records:
+        sub = db.query(models.Subject).filter(models.Subject.id == r.subject_id).first()
+        status_text = "Present" if r.status == "present" else "Absent"
+        recent_activity.append({
+            "id": r.id,
+            "text": f"Logged {status_text} for {sub.name if sub else 'Unknown'}",
+            "time": r.date
+        })
+
+    return {
+        "totalSubjects": len(subjects),
+        "overallPercentage": round(overall_percentage, 1),
+        "totalAttended": total_attended,
+        "totalConducted": total_conducted,
+        "missedClasses": missed_classes,
+        "safeSubjects": safe_subjects,
+        "belowTargetSubjects": len(subjects) - safe_subjects,
+        "recentActivity": recent_activity
+    }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

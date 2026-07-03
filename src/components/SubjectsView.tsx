@@ -7,9 +7,12 @@ interface SubjectsViewProps {
   subjects: Subject[];
   onLogAttendance: (subjectId: string, status: 'present' | 'absent') => void;
   onAddSubject: () => void;
+  onEditSubject?: (subject: Subject) => void;
+  onDeleteSubject?: (subject: Subject) => void;
+  onViewDetails?: (subjectId: string) => void;
 }
 
-export default function SubjectsView({ subjects, onLogAttendance, onAddSubject }: SubjectsViewProps) {
+export default function SubjectsView({ subjects, onLogAttendance, onAddSubject, onEditSubject, onDeleteSubject, onViewDetails }: SubjectsViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'on_track' | 'below_target'>('all');
 
@@ -131,6 +134,9 @@ export default function SubjectsView({ subjects, onLogAttendance, onAddSubject }
               key={sub.id}
               subject={sub}
               onLogAttendance={onLogAttendance}
+              onEdit={onEditSubject}
+              onDelete={onDeleteSubject}
+              onViewDetails={onViewDetails}
             />
           ))}
         </div>

@@ -41,6 +41,12 @@ class SubjectBase(BaseModel):
 class SubjectCreate(SubjectBase):
     pass
 
+class SubjectUpdate(BaseModel):
+    name: Optional[str] = None
+    attended: Optional[int] = Field(None, ge=0)
+    total: Optional[int] = Field(None, ge=0)
+    targetPercentage: Optional[int] = Field(None, ge=0, le=100)
+
 class SubjectResponse(SubjectBase):
     id: str
 
@@ -51,6 +57,18 @@ class SubjectResponse(SubjectBase):
 class AttendanceLog(BaseModel):
     subjectId: str
     status: str = Field(..., pattern="^(present|absent)$")
+
+class AttendanceUpdate(BaseModel):
+    status: Optional[str] = Field(None, pattern="^(present|absent)$")
+    notes: Optional[str] = None
+
+class AttendanceRecordResponse(BaseModel):
+    id: str
+    subjectId: str
+    subjectName: str
+    status: str
+    date: str
+    notes: Optional[str] = None
 
 class PredictionInput(BaseModel):
     subjectId: str

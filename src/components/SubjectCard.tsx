@@ -1,13 +1,28 @@
-import React from 'react';
-import { Check, X, ShieldCheck, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Check, X, ShieldCheck, AlertCircle, MoreVertical, Edit2, Trash2, Info } from 'lucide-react';
 import { Subject } from '../types';
 
 interface SubjectCardProps {
   subject: Subject;
   onLogAttendance: (subjectId: string, status: 'present' | 'absent') => void;
+  onEdit?: (subject: Subject) => void;
+  onDelete?: (subject: Subject) => void;
+  onViewDetails?: (subjectId: string) => void;
 }
 
-export default function SubjectCard({ subject, onLogAttendance }: SubjectCardProps) {
+export default function SubjectCard({ subject, onLogAttendance, onEdit, onDelete, onViewDetails }: SubjectCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const currentPercentage = subject.total > 0 ? (subject.attended / subject.total) * 100 : 100;
   const target = subject.targetPercentage;
   const isSafe = currentPercentage >= target;
@@ -43,14 +58,51 @@ export default function SubjectCard({ subject, onLogAttendance }: SubjectCardPro
       <div>
         {/* Card Header */}
         <div className="flex justify-between items-start mb-4" id={`subject-header-${subject.id}`}>
-          <div>
+          <div className="pr-2">
             <h4 className="text-lg font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight leading-snug">{subject.name}</h4>
             <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Target: {target}%</span>
           </div>
-          <div className="text-right">
-            <span className={`text-xl font-extrabold ${isSafe ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-              {currentPercentage.toFixed(1)}%
-            </span>
+          <div className="flex items-center gap-2">
+            <div className="text-right">
+              <span className={`text-xl font-extrabold ${isSafe ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                {currentPercentage.toFixed(1)}%
+              </span>
+            </div>
+            
+            {/* 3-Dot Action Menu */}
+            <div className="relative" ref={menuRef}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label="Options"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+              
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1E293B] rounded-2xl shadow-xl border border-slate-100 dark:border-[#334155] py-2 z-10 animate-fade-in overflow-hidden origin-top-right">
+                  <button 
+                    onClick={() => { setShowMenu(false); onViewDetails && onViewDetails(subject.id); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Info className="w-4 h-4 text-indigo-500" /> View Details
+                  </button>
+                  <button 
+                    onClick={() => { setShowMenu(false); onEdit && onEdit(subject); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <Edit2 className="w-4 h-4 text-emerald-500" /> Edit Subject
+                  </button>
+                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+                  <button 
+                    onClick={() => { setShowMenu(false); onDelete && onDelete(subject); }}
+                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-500" /> Delete Subject
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

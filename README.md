@@ -10,15 +10,14 @@ A full-stack attendance intelligence platform that helps college students track,
 
 ![Status](https://img.shields.io/badge/status-active%20development-6366f1?style=for-the-badge)
 ![Frontend](https://img.shields.io/badge/React-19-61dafb?style=for-the-badge&logo=react&logoColor=black)
-![Server](https://img.shields.io/badge/Node.js-Express-3c873a?style=for-the-badge&logo=node.js&logoColor=white)
+![Server](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![Styling](https://img.shields.io/badge/Tailwind_CSS-4.0-38bdf8?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Auth](https://img.shields.io/badge/JWT-secured-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
-![Charts](https://img.shields.io/badge/Recharts-3.x-ff7300?style=for-the-badge)
+![Database](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge)
 
 <br />
 
-[Overview](#-overview) • [Why Track75](#-why-track75) • [Features](#-features) • [Tech Stack](#-tech-stack) • [Architecture](#-system-architecture) • [Getting Started](#-getting-started) • [API Reference](#-api-reference) • [Roadmap](#-roadmap) • [Author](#-author)
+[Overview](#-overview) • [Why Track75](#-why-track75) • [Project Progress](#-project-progress) • [Features](#-features) • [Tech Stack](#-tech-stack) • [Architecture](#-system-architecture) • [Getting Started](#-getting-started) • [API Reference](#-api-reference) • [Author](#-author)
 
 </div>
 
@@ -54,49 +53,32 @@ The product is opinionated around the **75% eligibility rule** that governs most
 
 ---
 
-## Features
+## Project Progress
 
-### Current (Implemented)
+- **Phase 1: Authentication** ✅ Completed
+- **Phase 2: Attendance Management System** ✅ Completed
 
-- **JWT-based authentication** with bcrypt password hashing (register, login, profile-setup, persistent sessions)
-- **Subject management** — create, view, and persist per-subject attendance counters
-- **One-tap attendance logging** — mark a class as Present or Absent directly from the dashboard
-- **Attendance calculator** — live percentage per subject and across the semester
-- **Attendance predictor** — model *N* upcoming classes at *X%* attendance rate and see the projected result
-- **Safe-bunk planner** — tells the student exactly how many classes they can safely miss without falling below target
-- **Attendance risk score** — a composite 0–100 score bucketed into `SAFE`, `MEDIUM`, `HIGH`, `CRITICAL` with explanatory reasons
-- **Analytics dashboard** — trend line, subject comparison bar chart, weekly ratio, monthly trajectory, and a 4-week attendance heatmap
-- **Smart insights** — context-aware recommendations rendered in the dashboard and analytics view based on current data
-- **Light / Dark / System theme** with persisted user preference
-- **Responsive layout** — sidebar on desktop, bottom navigation on mobile, header search and notifications tray
+**Current Status:**  
+Core Attendance Platform Completed. The system supports full user authentication, real-time attendance tracking, subject management, and live dashboard calculations with persistent SQLite storage.
 
-### Planned (Roadmap)
-
-- AI-powered natural-language advisor (subject to model availability — see [Roadmap](#-roadmap))
-- Weekly progress reports and email digests
-- Push notifications when risk score crosses a threshold
-- Progressive Web App (PWA) support
-- Native Android client
-- Timetable integration for automatic class reminders
-- PostgreSQL persistence and multi-device sync
+**Next Milestone:**  
+Phase 3 – Analytics Engine
 
 ---
 
-## Screenshots
+## Features
 
-> Add screenshots of the application here. Recommended shots:
-> 1. Dashboard with risk score and live stats
-> 2. Predictor screen with a scenario result
-> 3. Analytics view with charts
-> 4. Mobile bottom-nav layout
-
-```
-docs/screenshots/
-├── dashboard.png
-├── predictor.png
-├── analytics.png
-└── mobile.png
-```
+- **JWT-based authentication** with bcrypt password hashing (register, login, profile-setup, persistent sessions)
+- **Subject management (CRUD)** — create, edit, view details, delete, and persist per-subject attendance counters
+- **Attendance management (CRUD)** — mark a class as Present or Absent, edit/delete past logs directly from the timeline
+- **Attendance history** — reverse-chronological timeline of all logged attendance records per subject
+- **Live dashboard integration** — immediate UI auto-refresh for overall attendance %, risk score, and missed classes (no page reloads)
+- **Attendance calculator** — live percentage per subject and across the semester
+- **Safe-bunk planner** — tells the student exactly how many classes they can safely miss without falling below target
+- **Attendance risk score** — dynamically recalculates SAFE, MEDIUM, HIGH, CRITICAL states
+- **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
+- **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
+- **Light / Dark / System theme** with persisted user preference
 
 ---
 
@@ -109,107 +91,86 @@ docs/screenshots/
 | **React 19** | UI framework |
 | **Vite 6** | Build tool and dev server |
 | **TypeScript** | Strict typing across the client |
-| **Tailwind CSS 4** | Utility-first styling via `@tailwindcss/vite` |
-| **Recharts** | Charts and data visualization |
-| **Framer Motion (`motion`)** | Page transitions and micro-interactions |
+| **Tailwind CSS 4** | Utility-first styling |
 | **Lucide React** | Icon system |
 
 ### Backend
 
 | Technology | Purpose |
 | --- | --- |
-| **Node.js + Express 4** | HTTP server and REST API |
-| **TypeScript (`tsx`)** | Type-safe server runtime in development |
-| **JWT (`jsonwebtoken`)** | Stateless authentication |
-| **bcryptjs** | Password hashing |
+| **FastAPI** | High-performance Python web framework |
+| **SQLAlchemy** | ORM for relational database interactions |
+| **PyJWT** | Stateless JWT authentication |
+| **bcrypt** | Secure password hashing |
 
 ### Data
 
-> The current build uses an **in-memory store** seeded with default subjects. There is no database yet — see the [Roadmap](#-roadmap) for the PostgreSQL plan.
-
-### Tooling
-
-| Tool | Purpose |
+| Technology | Purpose |
 | --- | --- |
-| **esbuild** | Server bundling for production |
-| **Vite middleware mode** | Dev server integration with Express |
+| **SQLite** | Persistent file-based relational database |
 
 ---
 
 ## System Architecture
 
-```
+```text
 ┌──────────────────────────┐
 │  Browser (React + Vite)  │
-│  - Pages & components    │
-│  - Recharts visualizer   │
+│  - Mobile-First UI       │
+│  - State Management      │
 │  - Theme context         │
 └────────────┬─────────────┘
              │  REST (/api/*) + Bearer JWT
              ▼
 ┌──────────────────────────┐
-│  Express server.ts       │
+│  FastAPI (Python)        │
 │  - Auth middleware       │
 │  - Subject endpoints     │
-│  - Attendance log        │
-│  - Predictor             │
+│  - Attendance CRUD       │
 │  - Stats & risk engine   │
 └────────────┬─────────────┘
-             │
+             │  SQLAlchemy ORM
              ▼
 ┌──────────────────────────┐
-│  In-memory data store    │
-│  (db_users, db_subjects) │
+│  SQLite Database         │
+│  (track75.db)            │
+│  - Users, Subjects,      │
+│  - AttendanceRecords     │
 └──────────────────────────┘
 ```
 
-The dev server uses Vite's middleware mode inside Express, so the same Node process serves the API and the React app. In production, Express serves the prebuilt `dist/` static bundle.
+The system uses a completely decoupled frontend and backend. The React app runs via Vite, and communicates with the FastAPI server which acts as the sole source of truth connecting to the SQLite database.
 
 ---
 
 ## Folder Structure
 
-```
+```text
 TRACK_75/
-├── server.ts                 # Express API + Vite middleware
-├── vite.config.ts            # Vite + Tailwind plugin config
-├── tsconfig.json             # TypeScript config
-├── package.json
-├── index.html                # Vite entry
-├── .env.example              # Environment variable template
-│
-├── src/
-│   ├── main.tsx              # React root
+├── src/                      # Frontend Source (React/Vite)
 │   ├── App.tsx               # Top-level app shell, auth gate, routing
-│   ├── ThemeContext.tsx      # Light/Dark/System theme provider
 │   ├── types.ts              # Shared TypeScript interfaces
 │   ├── index.css             # Tailwind entry
 │   └── components/
-│       ├── AuthView.tsx        # Splash, login, register, profile-setup
-│       ├── DashboardView.tsx   # Home dashboard
-│       ├── SubjectsView.tsx    # Full subject list
-│       ├── SubjectCard.tsx     # Individual subject tile
-│       ├── PredictorView.tsx   # Predictor page shell
-│       ├── PredictorForm.tsx   # Predictor input + result renderer
-│       ├── AnalyticsView.tsx   # Charts + heatmap
-│       ├── ProfileView.tsx     # User profile + goal
-│       ├── SettingsView.tsx    # Theme, threshold, reset
-│       ├── DashboardStats.tsx  # Stat tile row
-│       ├── AttendanceRiskCard.tsx
-│       ├── AddSubjectModal.tsx
-│       ├── Sidebar.tsx
-│       ├── TopHeader.tsx
-│       └── BottomNav.tsx       # Mobile navigation
+│       ├── AuthView.tsx      # Login, register, profile-setup
+│       ├── DashboardView.tsx # Home dashboard
+│       ├── SubjectsView.tsx  # Full subject list
+│       ├── SubjectCard.tsx   # Individual subject tile with actions
+│       ├── SubjectDetailsView.tsx # Deep-dive stats & history timeline
+│       └── ...
 │
-├── fastapi/                  # Standalone Python reference backend
-│   ├── main.py               # FastAPI mirror of the Express API
-│   └── requirements.txt
+├── fastapi/                  # Backend Source (Python/FastAPI)
+│   ├── main.py               # FastAPI application & endpoints
+│   ├── models.py             # SQLAlchemy models
+│   ├── schemas.py            # Pydantic validation schemas
+│   ├── database.py           # SQLite connection & session
+│   ├── auth.py               # JWT logic & password hashing
+│   └── requirements.txt      # Python dependencies
 │
-└── assets/
-    └── .aistudio/
+├── vite.config.ts            # Vite proxy & build config
+├── package.json
+└── README.md
 ```
-
-> The `fastapi/` directory is a **reference implementation** of the same endpoints in Python/FastAPI. It is not wired to the React frontend; the live app uses `server.ts`.
 
 ---
 
@@ -218,170 +179,86 @@ TRACK_75/
 ### Prerequisites
 
 - **Node.js** ≥ 18
-- **npm** (bundled with Node)
+- **Python** ≥ 3.10
 
 ### Installation
 
+1. Clone the repository
+2. Install frontend dependencies:
 ```bash
-git clone https://github.com/<your-username>/TRACK_75.git
-cd TRACK_75
 npm install
+```
+3. Install backend dependencies:
+```bash
+cd fastapi
+pip install -r requirements.txt
 ```
 
 ### Environment Variables
 
-Create a `.env.local` file in the project root:
+Create a `.env` file in the `fastapi/` directory:
 
 ```env
-JWT_SECRET=replace-with-a-long-random-string
+JWT_SECRET=your_super_secret_key_here
 ```
-
-> `JWT_SECRET` is required. If unset, the server falls back to a development-only key — **do not ship this to production**.
 
 ### Run the App
 
+Open two terminal windows.
+
+**Terminal 1 (Backend):**
+```bash
+cd fastapi
+uvicorn main:app --port 8080 --reload
+```
+
+**Terminal 2 (Frontend):**
 ```bash
 npm run dev
 ```
 
-The server starts on **http://localhost:3000** and serves both the API and the React dev client.
-
-### Build for Production
-
-```bash
-npm run build      # builds the React bundle AND the server bundle
-npm run start      # serves the compiled build via Express
-```
-
-### Lint / Type-check
-
-```bash
-npm run lint       # tsc --noEmit
-```
+The frontend will start on **http://localhost:5173** and automatically proxy API requests to the FastAPI backend on port **8080**.
 
 ---
 
 ## API Reference
 
-All endpoints below are mounted under `server.ts`. Authenticated routes require a `Bearer <token>` header.
+All endpoints require a `Bearer <token>` header except for `/api/auth/register` and `/api/auth/login`.
 
 ### Auth
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/api/auth/register` | — | Create a new account. Returns JWT. |
-| `POST` | `/api/auth/login` | — | Sign in. Returns JWT. |
-| `GET`  | `/api/auth/me` | ✅ | Current user profile. |
-| `POST` | `/api/auth/profile-setup` | ✅ | Complete college / department / semester / goal. |
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Create a new account. Returns JWT. |
+| `POST` | `/api/auth/login` | Sign in. Returns JWT. |
+| `GET`  | `/api/auth/me` | Current user profile. |
+| `POST` | `/api/auth/profile-setup` | Complete college / department / semester / goal. |
 
 ### Subjects
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `GET`  | `/api/subjects` | ✅ | List user's subjects. |
-| `POST` | `/api/subjects` | ✅ | Create a new subject. |
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET`  | `/api/subjects` | List user's subjects. |
+| `POST` | `/api/subjects` | Create a new subject. |
+| `PUT`  | `/api/subjects/{id}` | Edit an existing subject. |
+| `DELETE`| `/api/subjects/{id}` | Delete a subject and cascade its attendance records. |
 
 ### Attendance
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `POST` | `/api/attendance` | ✅ | Log a present / absent check-in for a subject. |
-| `POST` | `/api/reset` | ✅ | Reset all subject counters to seed values. |
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/attendance` | Log a present / absent check-in for a subject. |
+| `PUT`  | `/api/attendance/{id}` | Edit a specific attendance record (updates subject counts). |
+| `DELETE`| `/api/attendance/{id}`| Delete a specific attendance record (rewinds subject counts). |
+| `GET`  | `/api/attendance/history` | Retrieve chronological timeline logs for all subjects. |
 
-### Analytics & Prediction
+### Dashboard & Analytics
 
-| Method | Path | Auth | Description |
-| --- | --- | --- | --- |
-| `GET`  | `/api/stats` | ✅ | Aggregate semester stats. |
-| `POST` | `/api/predict` | ✅ | Run a prediction scenario for a subject. |
-| `GET`  | `/api/attendance/risk` | ✅ | Current composite risk score, level, and reasons. |
-
-### Prediction Request Shape
-
-```jsonc
-POST /api/predict
-{
-  "subjectId": "sub_1",
-  "upcomingClasses": 10,           // 1–50
-  "expectedAttendanceRate": 80     // 0–100
-}
-```
-
-### Prediction Response Shape
-
-```jsonc
-{
-  "subjectId": "sub_1",
-  "currentPercentage": 75.0,
-  "predictedPercentage": 77.3,
-  "targetPercentage": 75,
-  "requiredConsecutiveClasses": 0,
-  "safeToMissClasses": 2,
-  "status": "safe",                 // safe | at_risk | critical
-  "message": "You are on track! ..."
-}
-```
-
-### Risk Response Shape
-
-```jsonc
-{
-  "riskScore": 45,                  // 0–100
-  "riskLevel": "MEDIUM",            // SAFE | MEDIUM | HIGH | CRITICAL
-  "overallAttendance": 73.4,
-  "remainingSafeBunks": 1,
-  "reasons": ["Overall attendance below target", "..."]
-}
-```
-
----
-
-## AI Features
-
-Track75's intelligence layer is currently **deterministic**, not generative:
-
-- The **predictor** uses closed-form math over `attended`, `total`, `upcoming`, and `expectedAttendanceRate`.
-- The **risk score** is a weighted sum of normalized signals (subjects below target, overall percentage, consecutive absences, safe-bunk runway).
-- The **smart insights** are rule-based, driven by the live data.
-
-The `@google/genai` package is included as a dependency for a planned natural-language advisor (see [Roadmap](#-roadmap)). It is not yet integrated into any UI flow.
-
----
-
-## Project Workflow
-
-```text
-Register / Login
-      │
-      ▼
-Profile setup (college, department, semester, attendance goal)
-      │
-      ▼
-Add subjects (or accept seeded defaults)
-      │
-      ▼
-Log Present / Absent for each class
-      │
-      ▼
-View live Dashboard stats, risk card, and insights
-      │
-      ├──► Predictor: model upcoming classes and see projected %
-      ├──► Analytics: trend, comparison, heatmap
-      └──► Profile / Settings: adjust goal, switch theme, reset data
-```
-
----
-
-## Roadmap
-
-- [ ] **PostgreSQL persistence** with SQLAlchemy-equivalent migrations (replacing the in-memory store)
-- [ ] **AI Attendance Advisor** — natural-language Q&A powered by the Gemini API
-- [ ] **PWA support** — installable app with offline cache
-- [ ] **Push notifications** when risk score crosses a threshold
-- [ ] **Weekly email reports** summarizing each user's standing
-- [ ] **Timetable integration** for automatic class reminders
-- [ ] **Native Android client**
-- [ ] **Multi-device sync**
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET`  | `/api/dashboard` | Live aggregate stats (overall percentage, missed classes, subjects safely on track). |
+| `GET`  | `/api/attendance/risk` | Current composite risk score, risk level, and reasons. |
+| `GET`  | `/api/stats` | Aggregate semester stats (legacy format compatibility). |
 
 ---
 
@@ -394,8 +271,6 @@ Contributions are welcome.
 3. Commit your changes: `git commit -m "feat: add your feature"`
 4. Push the branch: `git push origin feat/your-feature`
 5. Open a Pull Request describing the change, motivation, and testing
-
-Please run `npm run lint` before opening a PR.
 
 ---
 
@@ -410,16 +285,6 @@ Released under the **MIT License**. See `LICENSE` for details.
 **Abhishek**
 
 Built as a focused effort to give students the same visibility into their attendance that institutions already have — only earlier, when it actually matters.
-
----
-
-## Acknowledgements
-
-- [Recharts](https://recharts.org) — declarative React charts
-- [Lucide](https://lucide.dev) — open-source icon set
-- [Tailwind CSS](https://tailwindcss.com) — utility-first styling
-- [Vite](https://vitejs.dev) — frontend tooling
-- [Express](https://expressjs.com) — HTTP server
 
 <div align="center">
 
