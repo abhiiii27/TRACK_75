@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, GraduationCap, AlertCircle, Plus } from 'lucide-react';
 import { Subject, PredictionResult } from './types';
 import Sidebar from './components/Sidebar';
@@ -39,6 +39,7 @@ export default function App() {
     remainingSafeBunks: 0,
     reasons: [],
   });
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -95,28 +96,31 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const [subsRes, statsRes, riskRes] = await Promise.all([
+      const [subsRes, statsRes, riskRes, analyticsRes] = await Promise.all([
         fetch('/api/subjects', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/stats', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/attendance/risk', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
+        fetch('/api/analytics', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
       ]);
 
-      if (subsRes.status === 401 || statsRes.status === 401 || riskRes.status === 401) {
+      if (subsRes.status === 401 || statsRes.status === 401 || riskRes.status === 401 || analyticsRes.status === 401) {
         handleLogout();
         return;
       }
 
-      if (!subsRes.ok || !statsRes.ok || !riskRes.ok) {
+      if (!subsRes.ok || !statsRes.ok || !riskRes.ok || !analyticsRes.ok) {
         throw new Error('Failed to retrieve student records from the database.');
       }
 
       const subsData = await subsRes.json();
       const statsData = await statsRes.json();
       const riskDataVal = await riskRes.json();
+      const analyticsDataVal = await analyticsRes.json();
 
       setSubjects(subsData);
       setStats(statsData);
       setRiskData(riskDataVal);
+      setAnalyticsData(analyticsDataVal);
     } catch (err: any) {
       console.error('Error fetching data:', err);
       setError(err.message || 'Could not connect to database. Retrying...');
@@ -204,15 +208,18 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Re-fetch aggregate stats and risk scores to keep everything aligned
-      const [statsRes, riskRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
-        authenticatedFetch('/api/attendance/risk')
+        authenticatedFetch('/api/attendance/risk'),
+        authenticatedFetch('/api/analytics')
       ]);
-      if (statsRes.ok && riskRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
+        const analyticsDataVal = await analyticsRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
+        setAnalyticsData(analyticsDataVal);
       }
     } catch (err: any) {
       console.error('Error marking attendance:', err);
@@ -247,15 +254,18 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
-        authenticatedFetch('/api/attendance/risk')
+        authenticatedFetch('/api/attendance/risk'),
+        authenticatedFetch('/api/analytics')
       ]);
-      if (statsRes.ok && riskRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
+        const analyticsDataVal = await analyticsRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
+        setAnalyticsData(analyticsDataVal);
       }
     } catch (err: any) {
       console.error('Error adding subject:', err);
@@ -292,15 +302,18 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
-        authenticatedFetch('/api/attendance/risk')
+        authenticatedFetch('/api/attendance/risk'),
+        authenticatedFetch('/api/analytics')
       ]);
-      if (statsRes.ok && riskRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
+        const analyticsDataVal = await analyticsRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
+        setAnalyticsData(analyticsDataVal);
       }
     } catch (err: any) {
       console.error('Error editing subject:', err);
@@ -335,15 +348,18 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
-        authenticatedFetch('/api/attendance/risk')
+        authenticatedFetch('/api/attendance/risk'),
+        authenticatedFetch('/api/analytics')
       ]);
-      if (statsRes.ok && riskRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
+        const analyticsDataVal = await analyticsRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
+        setAnalyticsData(analyticsDataVal);
       }
     } catch (err: any) {
       console.error('Error deleting subject:', err);
@@ -409,6 +425,10 @@ export default function App() {
     await fetchData();
   };
 
+  // Memoized top-level UI handlers
+  const handleAddSubjectOpen = useCallback(() => setIsModalOpen(true), []);
+  const handleClearActivities = useCallback(() => setActivities([]), []);
+
   // Dynamically render the active tab view page
   const renderActiveView = () => {
     switch (activePage) {
@@ -418,7 +438,7 @@ export default function App() {
             subjects={subjects}
             stats={stats}
             riskData={riskData}
-            onAddSubject={() => setIsModalOpen(true)}
+            onAddSubject={handleAddSubjectOpen}
             onLogAttendance={handleLogAttendance}
             setActivePage={setActivePage}
             activities={activities}
@@ -441,7 +461,7 @@ export default function App() {
           <SubjectsView
             subjects={subjects}
             onLogAttendance={handleLogAttendance}
-            onAddSubject={() => setIsModalOpen(true)}
+            onAddSubject={handleAddSubjectOpen}
             onEditSubject={(subject) => setEditingSubject(subject)}
             onDeleteSubject={(subject) => setDeletingSubject(subject)}
             onViewDetails={(subjectId) => { setViewingSubjectId(subjectId); setActivePage('subjects'); }}
@@ -459,6 +479,7 @@ export default function App() {
           <AnalyticsView
             subjects={subjects}
             stats={stats}
+            analyticsData={analyticsData}
           />
         );
       case 'profile':
@@ -502,7 +523,7 @@ export default function App() {
       <Sidebar 
         activePage={activePage} 
         setActivePage={setActivePage} 
-        onAddSubject={() => setIsModalOpen(true)} 
+        onAddSubject={handleAddSubjectOpen} 
         isOpenMobile={isOpenMobile}
         setIsOpenMobile={setIsOpenMobile}
       />
@@ -514,11 +535,11 @@ export default function App() {
         <TopHeader
           activePage={activePage}
           setActivePage={setActivePage}
-          onAddSubject={() => setIsModalOpen(true)}
+          onAddSubject={handleAddSubjectOpen}
           isOpenMobile={isOpenMobile}
           setIsOpenMobile={setIsOpenMobile}
           activities={activities}
-          onClearActivities={() => setActivities([])}
+          onClearActivities={handleClearActivities}
         />
 
         {/* Scrollable Main Content Area */}

@@ -22,7 +22,7 @@ interface SidebarProps {
   setIsOpenMobile: (open: boolean) => void;
 }
 
-export default function Sidebar({ 
+const Sidebar = function Sidebar({ 
   activePage, 
   setActivePage, 
   onAddSubject, 
@@ -235,3 +235,4 @@ export default function Sidebar({
     </>
   );
 }
+export default React.memo(Sidebar);

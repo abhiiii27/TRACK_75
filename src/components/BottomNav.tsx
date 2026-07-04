@@ -7,7 +7,7 @@ interface BottomNavProps {
   setActivePage: (page: string) => void;
 }
 
-export default function BottomNav({ activePage, setActivePage }: BottomNavProps) {
+const BottomNav = function BottomNav({ activePage, setActivePage }: BottomNavProps) {
   const tabs = [
     { key: 'dashboard', label: 'Home', icon: Home },
     { key: 'subjects', label: 'Subjects', icon: BookOpen },
@@ -59,3 +59,4 @@ export default function BottomNav({ activePage, setActivePage }: BottomNavProps)
     </nav>
   );
 }
+export default React.memo(BottomNav);

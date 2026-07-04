@@ -543,6 +543,241 @@ def get_dashboard(db: Session = Depends(database.get_db), current_user: models.U
         "recentActivity": recent_activity
     }
 
+from datetime import datetime, timedelta
+
+@app.get("/api/analytics", response_model=schemas.AnalyticsResponse)
+def get_analytics(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    subjects = db.query(models.Subject).filter(models.Subject.owner_id == current_user.id).all()
+    records = db.query(models.AttendanceRecord).filter(models.AttendanceRecord.owner_id == current_user.id).all()
+    
+    # 1. Base computations
+    total_attended = sum(s.attended for s in subjects)
+    total_conducted = sum(s.total for s in subjects)
+    overall_pct = (total_attended / total_conducted * 100.0) if total_conducted > 0 else 0.0
+
+    # Weekly & Monthly dates
+    today = datetime.now().date()
+    seven_days_ago = today - timedelta(days=7)
+    fourteen_days_ago = today - timedelta(days=14)
+    thirty_days_ago = today - timedelta(days=30)
+    sixty_days_ago = today - timedelta(days=60)
+
+    # Weekly Summary (last 7 days vs previous 7 days)
+    w_attended = 0
+    w_missed = 0
+    w_prev_attended = 0
+    w_prev_missed = 0
+
+    # Monthly Summary (last 30 days vs previous 30 days)
+    m_attended = 0
+    m_missed = 0
+    m_prev_attended = 0
+    m_prev_missed = 0
+
+    # For weekly/monthly graphs and heatmap
+    day_counts = {day: {"attended": 0, "missed": 0} for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
+    month_counts = {}  # "YYYY-MM": {"attended": 0, "total": 0}
+    
+    for i in range(6):
+        m_date = today.replace(day=1) - timedelta(days=30 * i)
+        m_str = m_date.strftime("%Y-%m")
+        month_counts[m_str] = {"attended": 0, "total": 0}
+
+    for r in records:
+        r_date = datetime.strptime(r.date, "%Y-%m-%d").date()
+        
+        # Weekly
+        if r_date > seven_days_ago:
+            if r.status == "present": w_attended += 1
+            else: w_missed += 1
+        elif r_date > fourteen_days_ago:
+            if r.status == "present": w_prev_attended += 1
+            else: w_prev_missed += 1
+            
+        # Monthly
+        if r_date > thirty_days_ago:
+            if r.status == "present": m_attended += 1
+            else: m_missed += 1
+        elif r_date > sixty_days_ago:
+            if r.status == "present": m_prev_attended += 1
+            else: m_prev_missed += 1
+
+        # Day of week (last 7 days)
+        if r_date > seven_days_ago:
+            day_name = r_date.strftime("%a")
+            if r.status == "present": day_counts[day_name]["attended"] += 1
+            else: day_counts[day_name]["missed"] += 1
+
+        # Month grouping
+        m_str = r_date.strftime("%Y-%m")
+        if m_str in month_counts:
+            month_counts[m_str]["total"] += 1
+            if r.status == "present":
+                month_counts[m_str]["attended"] += 1
+
+    w_total = w_attended + w_missed
+    w_pct = (w_attended / w_total * 100.0) if w_total > 0 else 0.0
+    w_prev_total = w_prev_attended + w_prev_missed
+    w_prev_pct = (w_prev_attended / w_prev_total * 100.0) if w_prev_total > 0 else 0.0
+    w_growth = w_pct - w_prev_pct
+
+    m_total = m_attended + m_missed
+    m_pct = (m_attended / m_total * 100.0) if m_total > 0 else 0.0
+    m_prev_total = m_prev_attended + m_prev_missed
+    m_prev_pct = (m_prev_attended / m_prev_total * 100.0) if m_prev_total > 0 else 0.0
+    m_growth = m_pct - m_prev_pct
+
+    # Subject Comparison & Goal Progress
+    sub_comparisons = []
+    total_safe_bunks = 0
+    total_required = 0
+
+    best_sub = None
+    worst_sub = None
+    most_missed_sub = None
+    
+    for s in subjects:
+        pct = (s.attended / s.total * 100.0) if s.total > 0 else 0.0
+        target_frac = s.target_percentage / 100.0
+        
+        safe = 0
+        req = 0
+        
+        if pct >= s.target_percentage:
+            if target_frac > 0:
+                safe = max(0, math.floor((s.attended - target_frac * s.total) / target_frac))
+        else:
+            if target_frac < 1.0:
+                req = max(0, math.ceil((target_frac * s.total - s.attended) / (1.0 - target_frac)))
+            else:
+                req = 999
+                
+        total_safe_bunks += safe
+        total_required += req
+        
+        sub_comparisons.append({
+            "name": s.name,
+            "percentage": pct,
+            "attended": s.attended,
+            "missed": s.total - s.attended,
+            "totalClasses": s.total,
+            "safeBunks": safe,
+            "requiredClasses": req
+        })
+
+    # Sort comparisons for best/worst calculation
+    sorted_subs = sorted(sub_comparisons, key=lambda x: x["percentage"])
+    if sorted_subs:
+        worst_sub = sorted_subs[0]
+        best_sub = sorted_subs[-1]
+    
+    missed_sorted = sorted(sub_comparisons, key=lambda x: x["missed"], reverse=True)
+    if missed_sorted:
+        most_missed_sub = missed_sorted[0]
+
+    # Trend Determination
+    trend_str = "Stable"
+    if w_growth > 2.0: trend_str = "Improving"
+    elif w_growth < -2.0: trend_str = "Declining"
+
+    # Graph Data
+    weekly_graph = []
+    for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]:
+        weekly_graph.append({
+            "name": day,
+            "Attended": day_counts[day]["attended"],
+            "Missed": day_counts[day]["missed"]
+        })
+
+    monthly_graph = []
+    for m in reversed(list(month_counts.keys())):
+        c = month_counts[m]
+        pct = (c["attended"] / c["total"] * 100.0) if c["total"] > 0 else 0.0
+        # Convert YYYY-MM to MMM
+        dt = datetime.strptime(m, "%Y-%m")
+        monthly_graph.append({
+            "name": dt.strftime("%b"),
+            "Percentage": pct
+        })
+        
+    trend_data = [
+        {"name": "Previous Month", "Percentage": m_prev_pct},
+        {"name": "Current Month", "Percentage": m_pct},
+        {"name": "Previous Week", "Percentage": w_prev_pct},
+        {"name": "Current Week", "Percentage": w_pct},
+    ]
+
+    # Heatmap (Last 4 weeks)
+    heatmap = []
+    for w in range(4):
+        days_status = []
+        for d in range(5): # Mon-Fri
+            target_date = today - timedelta(days=(w * 7 + (4-d)))
+            # Check records for target_date
+            day_recs = [r for r in records if r.date == target_date.isoformat()]
+            if not day_recs:
+                days_status.append("none")
+            elif any(r.status == "present" for r in day_recs):
+                days_status.append("attended")
+            else:
+                days_status.append("missed")
+        heatmap.append({"week": f"Week {4-w}", "days": days_status})
+
+    # Insights
+    best_day = max(day_counts.items(), key=lambda x: x[1]["attended"])[0] if any(d["attended"] > 0 for d in day_counts.values()) else "N/A"
+    worst_day = max(day_counts.items(), key=lambda x: x[1]["missed"])[0] if any(d["missed"] > 0 for d in day_counts.values()) else "N/A"
+    
+    insights = {
+        "bestSubject": best_sub["name"] if best_sub else "N/A",
+        "worstSubject": worst_sub["name"] if worst_sub else "N/A",
+        "highestAttendance": best_sub["percentage"] if best_sub else 0.0,
+        "lowestAttendance": worst_sub["percentage"] if worst_sub else 0.0,
+        "mostMissedSubject": most_missed_sub["name"] if most_missed_sub else "N/A",
+        "mostConsistentSubject": best_sub["name"] if best_sub else "N/A",
+        "averageAttendance": overall_pct,
+        "highestAttendanceDay": best_day,
+        "lowestAttendanceDay": worst_day
+    }
+
+    future_ai = {
+        "riskScore": overall_pct, # Placeholder
+        "aiRecommendations": [],
+        "smartNotifications": []
+    }
+
+    return {
+        "weeklySummary": {
+            "percentage": w_pct,
+            "attended": w_attended,
+            "missed": w_missed,
+            "totalClasses": w_total,
+            "comparison": f"{'+' if w_growth >= 0 else ''}{round(w_growth, 1)}%",
+            "status": "On Track" if w_pct >= current_user.attendance_goal else "Risk of Short"
+        },
+        "monthlySummary": {
+            "percentage": m_pct,
+            "attended": m_attended,
+            "missed": m_missed,
+            "totalClasses": m_total,
+            "comparison": f"{'+' if m_growth >= 0 else ''}{round(m_growth, 1)}%",
+            "status": "Optimal Standing" if m_pct >= current_user.attendance_goal else "Risk of Short"
+        },
+        "subjectComparison": sub_comparisons,
+        "goalProgress": {
+            "targetAttendance": current_user.attendance_goal,
+            "currentAttendance": overall_pct,
+            "remainingClasses": total_required,
+            "safeBunks": total_safe_bunks
+        },
+        "attendanceTrend": trend_str,
+        "trendData": trend_data,
+        "weeklyGraphData": weekly_graph,
+        "monthlyGraphData": monthly_graph,
+        "heatmapWeeks": heatmap,
+        "smartInsights": insights,
+        "futureAI": future_ai
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

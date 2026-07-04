@@ -57,12 +57,13 @@ The product is opinionated around the **75% eligibility rule** that governs most
 
 - **Phase 1: Authentication** ✅ Completed
 - **Phase 2: Attendance Management System** ✅ Completed
+- **Phase 3: Analytics Engine** ✅ Completed
 
 **Current Status:**  
-Core Attendance Platform Completed. The system supports full user authentication, real-time attendance tracking, subject management, and live dashboard calculations with persistent SQLite storage.
+Core Analytics Engine Completed. The system supports full user authentication, real-time attendance tracking, subject management, and live backend-driven analytics (weekly metrics, monthly trajectories, heatmaps, and AI recommendations).
 
 **Next Milestone:**  
-Phase 3 – Analytics Engine
+Phase 4 – Cloud Deployment & CI/CD Pipeline
 
 ---
 
@@ -259,6 +260,7 @@ All endpoints require a `Bearer <token>` header except for `/api/auth/register` 
 | `GET`  | `/api/dashboard` | Live aggregate stats (overall percentage, missed classes, subjects safely on track). |
 | `GET`  | `/api/attendance/risk` | Current composite risk score, risk level, and reasons. |
 | `GET`  | `/api/stats` | Aggregate semester stats (legacy format compatibility). |
+| `GET`  | `/api/analytics` | Comprehensive weekly/monthly metrics, heatmaps, and chart datasets. |
 
 ---
 

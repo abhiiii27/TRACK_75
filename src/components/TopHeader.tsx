@@ -21,7 +21,7 @@ interface TopHeaderProps {
   onClearActivities?: () => void;
 }
 
-export default function TopHeader({
+const TopHeader = function TopHeader({
   activePage,
   setActivePage,
   onAddSubject,
@@ -192,3 +192,4 @@ export default function TopHeader({
     </header>
   );
 }
+export default React.memo(TopHeader);

@@ -84,3 +84,81 @@ class PredictionResult(BaseModel):
     safeToMissClasses: int
     status: str
     message: str
+
+# Analytics Schemas
+class WeeklySummary(BaseModel):
+    percentage: float
+    attended: int
+    missed: int
+    totalClasses: int
+    comparison: str
+    status: str
+
+class MonthlySummary(BaseModel):
+    percentage: float
+    attended: int
+    missed: int
+    totalClasses: int
+    comparison: str
+    status: str
+
+class SubjectComparison(BaseModel):
+    name: str
+    percentage: float
+    attended: int
+    missed: int
+    totalClasses: int
+    safeBunks: int
+    requiredClasses: int
+
+class GoalProgress(BaseModel):
+    targetAttendance: int
+    currentAttendance: float
+    remainingClasses: int
+    safeBunks: int
+
+class TrendData(BaseModel):
+    name: str
+    Percentage: float
+
+class WeeklyGraphData(BaseModel):
+    name: str
+    Attended: int
+    Missed: int
+
+class MonthlyGraphData(BaseModel):
+    name: str
+    Percentage: float
+
+class HeatmapWeek(BaseModel):
+    week: str
+    days: List[str]
+
+class SmartInsights(BaseModel):
+    bestSubject: str
+    worstSubject: str
+    highestAttendance: float
+    lowestAttendance: float
+    mostMissedSubject: str
+    mostConsistentSubject: str
+    averageAttendance: float
+    highestAttendanceDay: str
+    lowestAttendanceDay: str
+
+class FutureAI(BaseModel):
+    riskScore: float
+    aiRecommendations: List[str]
+    smartNotifications: List[str]
+
+class AnalyticsResponse(BaseModel):
+    weeklySummary: WeeklySummary
+    monthlySummary: MonthlySummary
+    subjectComparison: List[SubjectComparison]
+    goalProgress: GoalProgress
+    attendanceTrend: str
+    trendData: List[TrendData]
+    weeklyGraphData: List[WeeklyGraphData]
+    monthlyGraphData: List[MonthlyGraphData]
+    heatmapWeeks: List[HeatmapWeek]
+    smartInsights: SmartInsights
+    futureAI: FutureAI
