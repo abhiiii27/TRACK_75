@@ -14,9 +14,10 @@ import {
   ChevronRight,
   BookOpen
 } from 'lucide-react';
-import { Subject } from '../types';
+import { Subject, AIPredictionResponse } from '../types';
 import DashboardStats from './DashboardStats';
 import AttendanceRiskCard from './AttendanceRiskCard';
+import AIPredictionPanel from './AIPredictionPanel';
 
 interface DashboardViewProps {
   subjects: Subject[];
@@ -35,6 +36,7 @@ interface DashboardViewProps {
     remainingSafeBunks: number;
     reasons: string[];
   };
+  predictionData?: AIPredictionResponse | null;
   onAddSubject: () => void;
   onLogAttendance: (subjectId: string, status: 'present' | 'absent') => void;
   setActivePage: (page: string) => void;
@@ -45,6 +47,7 @@ export default function DashboardView({
   subjects,
   stats,
   riskData,
+  predictionData,
   onAddSubject,
   onLogAttendance,
   setActivePage,
@@ -64,56 +67,6 @@ export default function DashboardView({
 
   // Safe Bunks display
   const totalSafeBunks = riskData.remainingSafeBunks;
-
-  // Generate dynamic AI Recommendation
-  const getAIRecommendation = () => {
-    if (subjects.length === 0) {
-      return {
-        text: "Register your first subject using 'Add Subject' to start receiving smart AI attendance suggestions.",
-        type: 'info',
-        title: 'Get Started'
-      };
-    }
-
-    const worstSubject = [...subjects]
-      .filter(s => s.total > 0)
-      .map(s => ({
-        ...s,
-        pct: (s.attended / s.total) * 100
-      }))
-      .sort((a, b) => a.pct - b.pct)[0];
-
-    if (worstSubject && worstSubject.pct < worstSubject.targetPercentage) {
-      const targetFrac = worstSubject.targetPercentage / 100;
-      let required = 0;
-      if (targetFrac < 1.0) {
-        required = Math.ceil((targetFrac * worstSubject.total - worstSubject.attended) / (1 - targetFrac));
-      } else {
-        required = 999;
-      }
-      return {
-        text: `Urgent attention required for ${worstSubject.name}. Your attendance is at ${worstSubject.pct.toFixed(1)}%. You must attend the next ${required} classes consecutively to reach your ${worstSubject.targetPercentage}% target!`,
-        type: 'danger',
-        title: 'Critical Risk Alert'
-      };
-    }
-
-    if (stats.overallPercentage < 75) {
-      return {
-        text: `Your overall attendance is ${stats.overallPercentage}%, which is below the safe threshold of 75%. Try to log Present in your upcoming classes to prevent detention risk.`,
-        type: 'warning',
-        title: 'Improve Overall Standing'
-      };
-    }
-
-    return {
-      text: `All systems nominal! Your overall attendance is in outstanding standing (${stats.overallPercentage}%). You have ${totalSafeBunks} safe bunks remaining. Excellent planning!`,
-      type: 'success',
-      title: 'Smart Advisor Status'
-    };
-  };
-
-  const aiRecommendation = getAIRecommendation();
 
   // Create a structured schedule for today based on registered subjects
   const getTodaySchedule = () => {
@@ -276,56 +229,8 @@ export default function DashboardView({
           </div>
         </div>
 
-        {/* AI Recommendations Box */}
-        <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs flex flex-col justify-between" id="dashboard-recommendation-panel">
-          <div>
-            <div className="flex items-center gap-2 mb-6" id="ai-advisor-title">
-              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight">AI Co-Pilot Recommendation</h3>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Smart academic strategy analysis</p>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/40 border border-slate-100/50 dark:border-[#334155]/50" id="ai-advisor-content-box">
-              <span className={`text-[10px] font-bold uppercase tracking-widest block mb-2 ${
-                aiRecommendation.type === 'danger' ? 'text-rose-600 dark:text-rose-400' :
-                aiRecommendation.type === 'warning' ? 'text-amber-600 dark:text-amber-400' :
-                'text-emerald-600 dark:text-emerald-400'
-              }`}>
-                {aiRecommendation.title}
-              </span>
-              <p className="text-slate-600 dark:text-[#CBD5E1] text-xs font-semibold leading-relaxed">
-                {aiRecommendation.text}
-              </p>
-            </div>
-
-            {/* Quick insights lists */}
-            {subjects.length > 0 && (
-              <div className="mt-6 space-y-2.5">
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Core Strategies</span>
-                <div className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-[#CBD5E1] font-medium">
-                  <span className="text-indigo-500 shrink-0">•</span>
-                  <span>Avoid skipping multiple consecutive classes to prevent rapid risk score gains.</span>
-                </div>
-                <div className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-[#CBD5E1] font-medium">
-                  <span className="text-indigo-500 shrink-0">•</span>
-                  <span>Use the **Predictor simulator** to preview exam eligibility before skipping.</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => setActivePage('predictor')}
-            className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            <Sparkles className="w-4 h-4 shrink-0" />
-            Launch Simulator
-          </button>
-        </div>
+        {/* AI Prediction Engine Box */}
+        <AIPredictionPanel predictionData={predictionData} />
       </div>
 
       {/* Fourth Section: Quick Actions Panel */}

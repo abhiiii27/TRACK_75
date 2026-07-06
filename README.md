@@ -58,12 +58,13 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 1: Authentication** ✅ Completed
 - **Phase 2: Attendance Management System** ✅ Completed
 - **Phase 3: Analytics Engine** ✅ Completed
+- **Phase 4A: AI Prediction Engine** ✅ Completed
 
 **Current Status:**  
-Core Analytics Engine Completed. The system supports full user authentication, real-time attendance tracking, subject management, and live backend-driven analytics (weekly metrics, monthly trajectories, heatmaps, and AI recommendations).
+AI Prediction Engine Completed. The system now includes a dynamic, rule-based AI backend engine (`GET /api/ai/predict`) that evaluates the user's historical trajectory to forecast end-of-semester attendance, dynamically calculating a risk score, confidence score, and contextual AI insights based entirely on real SQLite data.
 
 **Next Milestone:**  
-Phase 4 – Cloud Deployment & CI/CD Pipeline
+Phase 4B – Cloud Deployment & CI/CD Pipeline
 
 ---
 
@@ -77,6 +78,9 @@ Phase 4 – Cloud Deployment & CI/CD Pipeline
 - **Attendance calculator** — live percentage per subject and across the semester
 - **Safe-bunk planner** — tells the student exactly how many classes they can safely miss without falling below target
 - **Attendance risk score** — dynamically recalculates SAFE, MEDIUM, HIGH, CRITICAL states
+- **AI Prediction Engine** — rule-based forecasting generating contextual insights (`GET /api/ai/predict`)
+- **Attendance Forecasting** — extrapolates recent logging velocity to project final semester attendance
+- **Prediction Confidence & Trend** — evaluates available historical data to assign a confidence weight and a direction trend (Improving, Declining, Stable)
 - **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
 - **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
 - **Light / Dark / System theme** with persisted user preference

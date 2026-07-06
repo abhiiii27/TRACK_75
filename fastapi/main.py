@@ -778,6 +778,119 @@ def get_analytics(db: Session = Depends(database.get_db), current_user: models.U
         "futureAI": future_ai
     }
 
+@app.get("/api/ai/predict", response_model=schemas.AIPredictionResponse)
+def get_ai_prediction(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    from datetime import date, timedelta
+    
+    subjects = db.query(models.Subject).filter(models.Subject.owner_id == current_user.id).all()
+    records = db.query(models.AttendanceRecord).filter(models.AttendanceRecord.owner_id == current_user.id).all()
+    
+    total_attended = sum(s.attended for s in subjects)
+    total_classes = sum(s.total for s in subjects)
+    current_percentage = (total_attended / total_classes * 100.0) if total_classes > 0 else 0.0
+    
+    # Calculate Trend
+    today = date.today()
+    last_7_days = [(today - timedelta(days=i)).isoformat() for i in range(7)]
+    prev_7_days = [(today - timedelta(days=i)).isoformat() for i in range(7, 14)]
+    
+    recent_records = [r for r in records if r.date in last_7_days]
+    prev_records = [r for r in records if r.date in prev_7_days]
+    
+    def get_pct(recs):
+        if not recs: return 0.0
+        att = sum(1 for r in recs if r.status == "present")
+        return (att / len(recs)) * 100.0
+        
+    recent_pct = get_pct(recent_records)
+    prev_pct = get_pct(prev_records)
+    
+    trend = "Stable"
+    if recent_pct > prev_pct + 5:
+        trend = "Improving"
+    elif recent_pct < prev_pct - 5:
+        trend = "Declining"
+        
+    # Calculate Prediction & Remaining Stats
+    total_safe = 0
+    total_req = 0
+    projected_final_attended = 0
+    projected_final_total = 0
+    
+    for s in subjects:
+        target_frac = s.target_percentage / 100.0
+        # Estimate semester length: 45 classes or +15 classes if already far along
+        estimated_total = max(45, s.total + 15)
+        remaining = estimated_total - s.total
+        
+        # Predicted behavior: recent velocity, or overall velocity, or target fallback
+        student_velocity = recent_pct / 100.0 if recent_records else (s.attended / s.total if s.total > 0 else target_frac)
+        predicted_attended = s.attended + (remaining * student_velocity)
+        
+        projected_final_attended += predicted_attended
+        projected_final_total += estimated_total
+        
+        if s.total > 0:
+            safe = s.attended - math.ceil(target_frac * s.total)
+            if safe > 0:
+                total_safe += math.floor(safe / target_frac)
+            
+            if (s.attended / s.total) < target_frac and target_frac < 1.0:
+                total_req += max(0, math.ceil((target_frac * s.total - s.attended) / (1.0 - target_frac)))
+    
+    predicted_percentage = (projected_final_attended / projected_final_total * 100.0) if projected_final_total > 0 else 0.0
+    
+    # Calculate Risk Score (0-100, where 100 is max risk)
+    goal_diff = current_user.attendance_goal - current_percentage
+    risk_score = 0
+    if total_classes == 0:
+        risk_score = 0
+    else:
+        if goal_diff > 0:
+            risk_score = min(100, 50 + (goal_diff * 2.5))
+        else:
+            risk_score = max(0, 50 - (abs(goal_diff) * 2))
+            
+        if trend == "Declining":
+            risk_score = min(100, risk_score + 15)
+        elif trend == "Improving":
+            risk_score = max(0, risk_score - 15)
+            
+    risk_level = "Safe"
+    if risk_score > 75:
+        risk_level = "High"
+    elif risk_score > 40:
+        risk_level = "Medium"
+        
+    # Confidence Score
+    confidence = "Low"
+    if total_classes > 50:
+        confidence = "High"
+    elif total_classes > 15:
+        confidence = "Medium"
+        
+    # AI Insight Rule Engine
+    insight = "Start logging your classes to get personalized AI predictions."
+    if total_classes > 0:
+        if risk_level == "High":
+            insight = f"Critical Alert: Your attendance ({current_percentage:.1f}%) is dangerously below your goal of {current_user.attendance_goal}%. You must attend the next {total_req} classes consistently to recover your semester trajectory."
+        elif risk_level == "Medium":
+            insight = f"Caution: Your predicted end-of-semester attendance is trending towards {predicted_percentage:.1f}%. Since your trend is {trend}, pay close attention to your upcoming lectures to stabilize your standing."
+        else:
+            insight = f"Excellent pacing. You are maintaining a healthy {trend} trend. If you continue at this rate, your predicted semester attendance will comfortably hit {predicted_percentage:.1f}%, leaving you with a buffer of {total_safe} safe bunks."
+            
+    return schemas.AIPredictionResponse(
+        currentPercentage=current_percentage,
+        predictedPercentage=predicted_percentage,
+        riskScore=int(risk_score),
+        riskLevel=risk_level,
+        safeBunksRemaining=total_safe,
+        requiredClasses=total_req,
+        attendanceTrend=trend,
+        confidenceScore=confidence,
+        aiInsight=insight
+    )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

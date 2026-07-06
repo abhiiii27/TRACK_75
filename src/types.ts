@@ -30,3 +30,15 @@ export interface PredictionResult {
   status: 'safe' | 'at_risk' | 'critical';
   message: string;
 }
+
+export interface AIPredictionResponse {
+  currentPercentage: number;
+  predictedPercentage: number;
+  riskScore: number;
+  riskLevel: string;
+  safeBunksRemaining: number;
+  requiredClasses: number;
+  attendanceTrend: string;
+  confidenceScore: string;
+  aiInsight: string;
+}

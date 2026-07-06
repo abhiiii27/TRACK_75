@@ -162,3 +162,15 @@ class AnalyticsResponse(BaseModel):
     heatmapWeeks: List[HeatmapWeek]
     smartInsights: SmartInsights
     futureAI: FutureAI
+
+class AIPredictionResponse(BaseModel):
+    currentPercentage: float
+    predictedPercentage: float
+    riskScore: int
+    riskLevel: str
+    safeBunksRemaining: int
+    requiredClasses: int
+    attendanceTrend: str
+    confidenceScore: str
+    aiInsight: str
+
