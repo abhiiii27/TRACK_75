@@ -63,8 +63,9 @@ The product is opinionated around the **75% eligibility rule** that governs most
 **Current Status:**  
 AI Prediction Engine Completed. The system now includes a dynamic, rule-based AI backend engine (`GET /api/ai/predict`) that evaluates the user's historical trajectory to forecast end-of-semester attendance, dynamically calculating a risk score, confidence score, and contextual AI insights based entirely on real SQLite data.
 
-**Next Milestone:**  
-Phase 4B – Cloud Deployment & CI/CD Pipeline
+**Next Milestones:**  
+- **Phase 4B:** AI Recommendation Engine
+- **Phase 6:** PWA & Deployment (Cloud Deployment & CI/CD Pipeline)
 
 ---
 
