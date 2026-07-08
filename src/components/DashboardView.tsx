@@ -14,10 +14,11 @@ import {
   ChevronRight,
   BookOpen
 } from 'lucide-react';
-import { Subject, AIPredictionResponse } from '../types';
+import { Subject, AIPredictionResponse, AIRecommendationResponse } from '../types';
 import DashboardStats from './DashboardStats';
 import AttendanceRiskCard from './AttendanceRiskCard';
 import AIPredictionPanel from './AIPredictionPanel';
+import AIRecommendationPanel from './AIRecommendationPanel';
 
 interface DashboardViewProps {
   subjects: Subject[];
@@ -37,6 +38,7 @@ interface DashboardViewProps {
     reasons: string[];
   };
   predictionData?: AIPredictionResponse | null;
+  recommendationData?: AIRecommendationResponse | null;
   onAddSubject: () => void;
   onLogAttendance: (subjectId: string, status: 'present' | 'absent') => void;
   setActivePage: (page: string) => void;
@@ -48,6 +50,7 @@ export default function DashboardView({
   stats,
   riskData,
   predictionData,
+  recommendationData,
   onAddSubject,
   onLogAttendance,
   setActivePage,
@@ -232,6 +235,9 @@ export default function DashboardView({
         {/* AI Prediction Engine Box */}
         <AIPredictionPanel predictionData={predictionData} />
       </div>
+
+      {/* AI Recommendation Engine */}
+      <AIRecommendationPanel data={recommendationData} />
 
       {/* Fourth Section: Quick Actions Panel */}
       <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs" id="dashboard-quick-actions-panel">

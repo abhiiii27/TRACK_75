@@ -891,6 +891,148 @@ def get_ai_prediction(db: Session = Depends(database.get_db), current_user: mode
         aiInsight=insight
     )
 
+@app.get("/api/ai/recommendations", response_model=schemas.AIRecommendationResponse)
+def get_ai_recommendations(db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    subjects = db.query(models.Subject).filter(models.Subject.owner_id == current_user.id).all()
+    
+    if not subjects:
+        return schemas.AIRecommendationResponse(
+            todayFocus="Register your first subject to receive AI recommendations.",
+            weakestSubject="N/A",
+            strongestSubject="N/A",
+            attendanceSummary="No subjects registered yet.",
+            motivationMessage="Let's get started on tracking your attendance!",
+            recoveryPlan=["Add your first subject using the dashboard."],
+            priorityTasks=[
+                schemas.PriorityTask(
+                    id="setup-1",
+                    title="Register Subjects",
+                    priority="High",
+                    action="Add Subject",
+                    reason="System needs subjects to analyze."
+                )
+            ]
+        )
+        
+    total_attended = sum(s.attended for s in subjects)
+    total_classes = sum(s.total for s in subjects)
+    overall_pct = (total_attended / total_classes * 100) if total_classes > 0 else 0
+    
+    # Calculate percentages and find weakest/strongest
+    subject_stats = []
+    for s in subjects:
+        pct = (s.attended / s.total * 100) if s.total > 0 else 100
+        target = s.target_percentage
+        deficit = target - pct
+        subject_stats.append({
+            "subject": s,
+            "pct": pct,
+            "deficit": deficit,
+            "is_safe": pct >= target
+        })
+        
+    # Sort to find weakest and strongest
+    subject_stats.sort(key=lambda x: x["pct"])
+    weakest = subject_stats[0]
+    strongest = subject_stats[-1]
+    
+    weakest_name = weakest["subject"].name if weakest["subject"].total > 0 else "None yet"
+    strongest_name = strongest["subject"].name if strongest["subject"].total > 0 else "None yet"
+    
+    # Generate Priority Tasks
+    priority_tasks = []
+    task_id_counter = 1
+    
+    # Check subjects that are below target
+    below_target = [st for st in subject_stats if not st["is_safe"]]
+    safe_subjects = [st for st in subject_stats if st["is_safe"]]
+    
+    for st in below_target:
+        priority = "High" if st["deficit"] > 10 else "Medium"
+        s = st["subject"]
+        
+        # Calculate exactly how many consecutive classes are needed
+        required_classes = 1
+        temp_attended = s.attended
+        temp_total = s.total
+        while (temp_attended / temp_total * 100) < s.target_percentage:
+            required_classes += 1
+            temp_attended += 1
+            temp_total += 1
+            if required_classes > 30: # sanity limit
+                break
+                
+        action_msg = f"Attend {required_classes} consecutive classes" if required_classes > 1 else "Attend next class"
+        
+        priority_tasks.append(schemas.PriorityTask(
+            id=f"task-{task_id_counter}",
+            title=f"Recover {s.name}",
+            priority=priority,
+            action=action_msg,
+            reason=f"Current ({st['pct']:.1f}%) is below {s.target_percentage}% goal."
+        ))
+        task_id_counter += 1
+        
+    # Positive Empty/Safe State
+    if len(priority_tasks) == 0:
+        priority_tasks.append(schemas.PriorityTask(
+            id=f"task-{task_id_counter}",
+            title="All Subjects Safe",
+            priority="Low",
+            action="Continue attending classes to preserve your safe attendance margin.",
+            reason="You have exceeded all targets!"
+        ))
+    else:
+        if strongest["subject"].total > 0:
+             priority_tasks.append(schemas.PriorityTask(
+                id=f"task-{task_id_counter}",
+                title=f"Buffer {strongest['subject'].name}",
+                priority="Low",
+                action="Attend all scheduled lectures this week.",
+                reason=f"Leading subject at {strongest['pct']:.1f}%."
+            ))
+            
+    # Generate Today Focus
+    if below_target:
+        todayFocus = f"Focus on {weakest['subject'].name} to stop attendance drop."
+    else:
+        todayFocus = "Perfect standing! Continue your winning streak."
+        
+    # Generate Recovery Plan
+    recoveryPlan = []
+    if below_target:
+        recoveryPlan.append(f"Attend {weakest['subject'].name} without fail.")
+        if len(below_target) > 1:
+            recoveryPlan.append(f"Do not skip {below_target[1]['subject'].name}.")
+        recoveryPlan.append("Pause all safe bunks temporarily.")
+    else:
+        recoveryPlan.append("Keep attending at your current pace.")
+        recoveryPlan.append("Accumulate safe bunks for emergencies.")
+        recoveryPlan.append(f"Keep an eye on {weakest['subject'].name}.")
+        
+    # Generate Attendance Summary
+    safe_count = len(safe_subjects)
+    risk_count = len(below_target)
+    attendanceSummary = f"Overall Attendance: {overall_pct:.1f}%\n✅ Safe Subjects: {safe_count}\n⚠️ Need Improvement: {risk_count}"
+    
+    # Motivation Message
+    if overall_pct >= current_user.attendance_goal:
+        motivationMessage = "Great work! Maintain your current attendance trend."
+    elif overall_pct >= current_user.attendance_goal - 10:
+        motivationMessage = "You are close to your goal. A little consistency will keep you above the target."
+    else:
+        motivationMessage = "Your attendance requires immediate attention. Focus on the highest-priority subjects first."
+
+    return schemas.AIRecommendationResponse(
+        todayFocus=todayFocus,
+        weakestSubject=weakest_name,
+        strongestSubject=strongest_name,
+        attendanceSummary=attendanceSummary,
+        motivationMessage=motivationMessage,
+        recoveryPlan=recoveryPlan,
+        priorityTasks=priority_tasks
+    )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)

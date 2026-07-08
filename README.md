@@ -59,12 +59,14 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 2: Attendance Management System** ✅ Completed
 - **Phase 3: Analytics Engine** ✅ Completed
 - **Phase 4A: AI Prediction Engine** ✅ Completed
+- **Phase 4B: AI Recommendation Engine** ✅ Completed
 
 **Current Status:**  
-AI Prediction Engine Completed. The system now includes a dynamic, rule-based AI backend engine (`GET /api/ai/predict`) that evaluates the user's historical trajectory to forecast end-of-semester attendance, dynamically calculating a risk score, confidence score, and contextual AI insights based entirely on real SQLite data.
+AI Recommendation Engine Completed. The system now features a rule-based recommendation backend (`GET /api/ai/recommendations`) powered by real SQLite attendance data. It generates personalized insights including Today's Focus, Strongest/Weakest Subjects, Dynamic Recovery Plans, Priority Tasks, and Attendance Summaries. The modular architecture is fully prepared for future Gemini/OpenAI LLM integration without requiring frontend modifications. The UI automatically refreshes these recommendations in real-time.
 
 **Next Milestones:**  
-- **Phase 4B:** AI Recommendation Engine
+- **Phase 5:** Smart Notifications & Reminder System
+- **Phase 6:** PWA & Deployment
 
 ---
 
@@ -81,6 +83,7 @@ AI Prediction Engine Completed. The system now includes a dynamic, rule-based AI
 - **AI Prediction Engine** — rule-based forecasting generating contextual insights (`GET /api/ai/predict`)
 - **Attendance Forecasting** — extrapolates recent logging velocity to project final semester attendance
 - **Prediction Confidence & Trend** — evaluates available historical data to assign a confidence weight and a direction trend (Improving, Declining, Stable)
+- **AI Recommendation Engine** — dynamically builds task priority queues, contextual motivation, and real-time safe recovery plans (`GET /api/ai/recommendations`)
 - **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
 - **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
 - **Light / Dark / System theme** with persisted user preference
@@ -265,6 +268,8 @@ All endpoints require a `Bearer <token>` header except for `/api/auth/register` 
 | `GET`  | `/api/attendance/risk` | Current composite risk score, risk level, and reasons. |
 | `GET`  | `/api/stats` | Aggregate semester stats (legacy format compatibility). |
 | `GET`  | `/api/analytics` | Comprehensive weekly/monthly metrics, heatmaps, and chart datasets. |
+| `GET`  | `/api/ai/predict` | AI Attendance Prediction Engine for forecasting end-of-semester trends. |
+| `GET`  | `/api/ai/recommendations` | AI Recommendation Engine generating priority tasks and recovery plans. |
 
 ---
 

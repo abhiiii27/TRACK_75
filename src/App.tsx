@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, GraduationCap, AlertCircle, Plus } from 'lucide-react';
-import { Subject, PredictionResult, AIPredictionResponse } from './types';
+import { Subject, PredictionResult, AIPredictionResponse, AIRecommendationResponse } from './types';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import BottomNav from './components/BottomNav';
@@ -41,6 +41,7 @@ export default function App() {
   });
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [predictionData, setPredictionData] = useState<AIPredictionResponse | null>(null);
+  const [recommendationData, setRecommendationData] = useState<AIRecommendationResponse | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -97,20 +98,21 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const [subsRes, statsRes, riskRes, analyticsRes, predictRes] = await Promise.all([
+      const [subsRes, statsRes, riskRes, analyticsRes, predictRes, recommendRes] = await Promise.all([
         fetch('/api/subjects', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/stats', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/attendance/risk', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/analytics', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
         fetch('/api/ai/predict', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
+        fetch('/api/ai/recommendations', { headers: { 'Authorization': `Bearer ${currentToken}` } }),
       ]);
 
-      if (subsRes.status === 401 || statsRes.status === 401 || riskRes.status === 401 || analyticsRes.status === 401 || predictRes.status === 401) {
+      if (subsRes.status === 401 || statsRes.status === 401 || riskRes.status === 401 || analyticsRes.status === 401 || predictRes.status === 401 || recommendRes.status === 401) {
         handleLogout();
         return;
       }
 
-      if (!subsRes.ok || !statsRes.ok || !riskRes.ok || !analyticsRes.ok || !predictRes.ok) {
+      if (!subsRes.ok || !statsRes.ok || !riskRes.ok || !analyticsRes.ok || !predictRes.ok || !recommendRes.ok) {
         throw new Error('Failed to retrieve student records from the database.');
       }
 
@@ -119,12 +121,14 @@ export default function App() {
       const riskDataVal = await riskRes.json();
       const analyticsDataVal = await analyticsRes.json();
       const predictData = await predictRes.json();
+      const recommendData = await recommendRes.json();
 
       setSubjects(subsData);
       setStats(statsData);
       setRiskData(riskDataVal);
-      setAnalyticsData(analyticsDataVal); setPredictionData(predictData);
+      setAnalyticsData(analyticsDataVal);
       setPredictionData(predictData);
+      setRecommendationData(recommendData);
     } catch (err: any) {
       console.error('Error fetching data:', err);
       setError(err.message || 'Could not connect to database. Retrying...');
@@ -212,21 +216,24 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Re-fetch aggregate stats and risk scores to keep everything aligned
-      const [statsRes, riskRes, analyticsRes, predictRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes, predictRes, recommendRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
         authenticatedFetch('/api/attendance/risk'),
         authenticatedFetch('/api/analytics'),
-        authenticatedFetch('/api/ai/predict')
+        authenticatedFetch('/api/ai/predict'),
+        authenticatedFetch('/api/ai/recommendations')
       ]);
-      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok && recommendRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
         const analyticsDataVal = await analyticsRes.json();
         const predictData = await predictRes.json();
+        const recommendData = await recommendRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
         setAnalyticsData(analyticsDataVal);
         setPredictionData(predictData);
+        setRecommendationData(recommendData);
       }
     } catch (err: any) {
       console.error('Error marking attendance:', err);
@@ -261,21 +268,24 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes, analyticsRes, predictRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes, predictRes, recommendRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
         authenticatedFetch('/api/attendance/risk'),
         authenticatedFetch('/api/analytics'),
-        authenticatedFetch('/api/ai/predict')
+        authenticatedFetch('/api/ai/predict'),
+        authenticatedFetch('/api/ai/recommendations')
       ]);
-      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok && recommendRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
         const analyticsDataVal = await analyticsRes.json();
         const predictData = await predictRes.json();
+        const recommendData = await recommendRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
         setAnalyticsData(analyticsDataVal);
         setPredictionData(predictData);
+        setRecommendationData(recommendData);
       }
     } catch (err: any) {
       console.error('Error adding subject:', err);
@@ -312,21 +322,24 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes, analyticsRes, predictRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes, predictRes, recommendRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
         authenticatedFetch('/api/attendance/risk'),
         authenticatedFetch('/api/analytics'),
-        authenticatedFetch('/api/ai/predict')
+        authenticatedFetch('/api/ai/predict'),
+        authenticatedFetch('/api/ai/recommendations')
       ]);
-      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok && recommendRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
         const analyticsDataVal = await analyticsRes.json();
         const predictData = await predictRes.json();
+        const recommendData = await recommendRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
         setAnalyticsData(analyticsDataVal);
         setPredictionData(predictData);
+        setRecommendationData(recommendData);
       }
     } catch (err: any) {
       console.error('Error editing subject:', err);
@@ -361,21 +374,24 @@ export default function App() {
       setActivities((prev) => [newActivity, ...prev.slice(0, 4)]);
 
       // Refresh overall stats and risk scores
-      const [statsRes, riskRes, analyticsRes, predictRes] = await Promise.all([
+      const [statsRes, riskRes, analyticsRes, predictRes, recommendRes] = await Promise.all([
         authenticatedFetch('/api/stats'),
         authenticatedFetch('/api/attendance/risk'),
         authenticatedFetch('/api/analytics'),
-        authenticatedFetch('/api/ai/predict')
+        authenticatedFetch('/api/ai/predict'),
+        authenticatedFetch('/api/ai/recommendations')
       ]);
-      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok) {
+      if (statsRes.ok && riskRes.ok && analyticsRes.ok && predictRes.ok && recommendRes.ok) {
         const statsData = await statsRes.json();
         const riskDataVal = await riskRes.json();
         const analyticsDataVal = await analyticsRes.json();
         const predictData = await predictRes.json();
+        const recommendData = await recommendRes.json();
         setStats(statsData);
         setRiskData(riskDataVal);
         setAnalyticsData(analyticsDataVal);
         setPredictionData(predictData);
+        setRecommendationData(recommendData);
       }
     } catch (err: any) {
       console.error('Error deleting subject:', err);
@@ -455,6 +471,7 @@ export default function App() {
             stats={stats}
             riskData={riskData}
             predictionData={predictionData}
+            recommendationData={recommendationData}
             onAddSubject={handleAddSubjectOpen}
             onLogAttendance={handleLogAttendance}
             setActivePage={setActivePage}

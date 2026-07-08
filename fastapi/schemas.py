@@ -174,3 +174,20 @@ class AIPredictionResponse(BaseModel):
     confidenceScore: str
     aiInsight: str
 
+
+class PriorityTask(BaseModel):
+    id: str
+    title: str
+    priority: str
+    action: str
+    reason: str
+
+class AIRecommendationResponse(BaseModel):
+    todayFocus: str
+    weakestSubject: str
+    strongestSubject: str
+    attendanceSummary: str
+    motivationMessage: str
+    recoveryPlan: List[str]
+    priorityTasks: List[PriorityTask]
+

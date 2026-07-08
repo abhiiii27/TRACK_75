@@ -42,3 +42,21 @@ export interface AIPredictionResponse {
   confidenceScore: string;
   aiInsight: string;
 }
+
+export interface PriorityTask {
+  id: string;
+  title: string;
+  priority: 'High' | 'Medium' | 'Low';
+  action: string;
+  reason: string;
+}
+
+export interface AIRecommendationResponse {
+  todayFocus: string;
+  weakestSubject: string;
+  strongestSubject: string;
+  attendanceSummary: string;
+  motivationMessage: string;
+  recoveryPlan: string[];
+  priorityTasks: PriorityTask[];
+}
