@@ -22,6 +22,7 @@ class User(Base):
     setup_complete = Column(Boolean, default=False)
 
     subjects = relationship("Subject", back_populates="owner", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
 
 
 class Subject(Base):
@@ -50,3 +51,28 @@ class AttendanceRecord(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     subject = relationship("Subject", back_populates="attendance_records")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    # type: "Critical" | "Warning" | "Success" | "Info"
+    # (maps to frontend type for colour/icon)
+    type = Column(String, nullable=False)
+    # category: "Attendance" | "System" | "Achievement"
+    category = Column(String, nullable=False, default="Attendance")
+    title = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    action = Column(String, nullable=True)          # e.g. "Open Subject"
+    related_subject_id = Column(String, nullable=True)
+    # dedup_key: unique per-user lifecycle key; used to upsert instead of insert
+    # e.g. "critical:subj-abc123" or "no_subjects"
+    dedup_key = Column(String, nullable=True, index=True)
+    # status: "unread" | "read" | "resolved"
+    status = Column(String, default="unread", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow)
+
+    owner = relationship("User", back_populates="notifications")

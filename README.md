@@ -60,12 +60,13 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 3: Analytics Engine** ✅ Completed
 - **Phase 4A: AI Prediction Engine** ✅ Completed
 - **Phase 4B: AI Recommendation Engine** ✅ Completed
+- **Phase 5A: Smart Notification Engine** ✅ Completed
 
 **Current Status:**  
-AI Recommendation Engine Completed. The system now features a rule-based recommendation backend (`GET /api/ai/recommendations`) powered by real SQLite attendance data. It generates personalized insights including Today's Focus, Strongest/Weakest Subjects, Dynamic Recovery Plans, Priority Tasks, and Attendance Summaries. The modular architecture is fully prepared for future Gemini/OpenAI LLM integration without requiring frontend modifications. The UI automatically refreshes these recommendations in real-time.
+Smart Notification Engine Completed. The system now automatically generates and manages intelligent alerts based on attendance events. It features dynamic duplicate prevention, automatic alert resolution (e.g., clearing a critical alert when attendance recovers), priority sorting, and a 30-item retention limit. The frontend includes a real-time notification drawer with optimistic UI updates and live relative timestamps.
 
 **Next Milestones:**  
-- **Phase 5:** Smart Notifications & Reminder System
+- **Phase 5B:** External Reminder System (Email/Push Integrations)
 - **Phase 6:** PWA & Deployment
 
 ---
@@ -84,6 +85,7 @@ AI Recommendation Engine Completed. The system now features a rule-based recomme
 - **Attendance Forecasting** — extrapolates recent logging velocity to project final semester attendance
 - **Prediction Confidence & Trend** — evaluates available historical data to assign a confidence weight and a direction trend (Improving, Declining, Stable)
 - **AI Recommendation Engine** — dynamically builds task priority queues, contextual motivation, and real-time safe recovery plans (`GET /api/ai/recommendations`)
+- **Smart Notification Engine** — priority-sorted dynamic alerts with intelligent lifecycle resolution and retention limits (`GET /api/notifications`)
 - **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
 - **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
 - **Light / Dark / System theme** with persisted user preference

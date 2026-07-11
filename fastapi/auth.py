@@ -12,7 +12,8 @@ import models, database
 load_dotenv()
 
 # Config
-SECRET_KEY = os.environ.get("JWT_SECRET", "track75_super_secret_jwt_key")
+import secrets
+SECRET_KEY = os.environ.get("JWT_SECRET", secrets.token_hex(32))
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

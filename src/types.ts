@@ -60,3 +60,21 @@ export interface AIRecommendationResponse {
   recoveryPlan: string[];
   priorityTasks: PriorityTask[];
 }
+
+export interface Notification {
+  id: string;
+  type: 'Critical' | 'Warning' | 'Success' | 'Info';
+  category: string;
+  title: string;
+  message: string;
+  action?: string;
+  related_subject_id?: string;
+  status: 'unread' | 'read' | 'resolved';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[];
+  unreadCount: number;
+}

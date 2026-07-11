@@ -191,3 +191,26 @@ class AIRecommendationResponse(BaseModel):
     recoveryPlan: List[str]
     priorityTasks: List[PriorityTask]
 
+
+# Notification Schemas
+from datetime import datetime
+
+class NotificationResponse(BaseModel):
+    id: str
+    type: str
+    category: str
+    title: str
+    message: str
+    action: Optional[str] = None
+    related_subject_id: Optional[str] = None
+    status: str  # "unread" | "read" | "resolved"
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+class NotificationListResponse(BaseModel):
+    notifications: List[NotificationResponse]
+    unreadCount: int
