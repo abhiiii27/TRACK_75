@@ -61,13 +61,14 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 4A: AI Prediction Engine** ✅ Completed
 - **Phase 4B: AI Recommendation Engine** ✅ Completed
 - **Phase 5A: Smart Notification Engine** ✅ Completed
+- **Phase 5B: PWA Foundation & Browser Notification Framework** ✅ Completed
 
 **Current Status:**  
-Smart Notification Engine Completed. The system now automatically generates and manages intelligent alerts based on attendance events. It features dynamic duplicate prevention, automatic alert resolution (e.g., clearing a critical alert when attendance recovers), priority sorting, and a 30-item retention limit. The frontend includes a real-time notification drawer with optimistic UI updates and live relative timestamps.
+Progressive Web App (PWA) Foundation and Browser Notification Framework Completed. The application is fully installable on mobile and desktop, features an intelligent offline Service Worker app shell, native SPA routing, secure zero-data static caching, and integrates an extensible browser permission framework prepared for external push integration.
 
 **Next Milestones:**  
-- **Phase 5B:** External Reminder System (Email/Push Integrations)
-- **Phase 6:** PWA & Deployment
+- **Phase 5C:** External Reminder System (Web Push / Email Integrations)
+- **Phase 6:** Production Deployment
 
 ---
 
@@ -86,6 +87,11 @@ Smart Notification Engine Completed. The system now automatically generates and 
 - **Prediction Confidence & Trend** — evaluates available historical data to assign a confidence weight and a direction trend (Improving, Declining, Stable)
 - **AI Recommendation Engine** — dynamically builds task priority queues, contextual motivation, and real-time safe recovery plans (`GET /api/ai/recommendations`)
 - **Smart Notification Engine** — priority-sorted dynamic alerts with intelligent lifecycle resolution and retention limits (`GET /api/notifications`)
+- **Progressive Web App (PWA)** — fully installable application on mobile and desktop platforms.
+- **Service Worker & Offline App Shell** — reliable offline caching, SPA routing support, and native fallback mechanisms.
+- **Secure Static Asset Caching** — aggressive caching of UI components with explicit zero-caching rules for sensitive attendance data and JWTs.
+- **Browser Notification Framework** — extensible local notification system and permission state management built for push readiness.
+- **Install Prompt & PWA Diagnostics** — intelligent `beforeinstallprompt` interception, 7-day snooze logic, and over-the-air Service Worker update tools.
 - **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
 - **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
 - **Light / Dark / System theme** with persisted user preference
@@ -103,6 +109,8 @@ Smart Notification Engine Completed. The system now automatically generates and 
 | **TypeScript** | Strict typing across the client |
 | **Tailwind CSS 4** | Utility-first styling |
 | **Lucide React** | Icon system |
+| **vite-plugin-pwa** | Service Worker, Manifest, and PWA generation |
+| **Workbox** | Production cache strategy and offline routing |
 
 ### Backend
 

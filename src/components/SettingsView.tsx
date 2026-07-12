@@ -8,9 +8,11 @@ import {
   Sparkles, 
   Sun, 
   Moon, 
-  Monitor 
+  Monitor,
+  Smartphone
 } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import { useNotificationPermission } from '../hooks/useNotificationPermission';
 
 interface SettingsViewProps {
   onResetData: () => Promise<void>;
@@ -18,11 +20,20 @@ interface SettingsViewProps {
 
 export default function SettingsView({ onResetData }: SettingsViewProps) {
   const { theme, setTheme } = useTheme();
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [dailyReminders, setDailyReminders] = useState(true);
+  const { permission, requestPermission, isSupported } = useNotificationPermission();
+  const [emailAlerts, setEmailAlerts] = useState(false); // Coming soon
+  const [dailyReminders, setDailyReminders] = useState(false); // Coming soon
   const [threshold, setThreshold] = useState(75);
   const [isResetting, setIsResetting] = useState(false);
   const [resetMessage, setResetMessage] = useState('');
+
+  const handleNotificationToggle = async () => {
+    if (permission !== 'granted') {
+      await requestPermission();
+    } else {
+      alert("Please revoke notifications from your browser settings.");
+    }
+  };
 
   const handleReset = async () => {
     if (!window.confirm('Are you sure you want to reset all subject attendance logs back to the default initial values? This action cannot be undone.')) {
@@ -105,40 +116,99 @@ export default function SettingsView({ onResetData }: SettingsViewProps) {
           </div>
         </div>
 
-        {/* Card 1: Alert Preferences */}
+        {/* Card 1: Notification & Alert Triggers */}
         <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs space-y-5">
           <h3 className="text-sm font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
             <Bell className="w-4.5 h-4.5 text-indigo-500" />
-            Notification & Alert Triggers
+            Notifications
           </h3>
 
           <div className="space-y-4 pt-1">
-            {/* Row 1 */}
+            {/* Row 1: Browser Notifications (Functional) */}
             <div className="flex items-center justify-between gap-4 text-xs font-semibold">
               <div>
-                <span className="text-slate-800 dark:text-[#F8FAFC] block">Critical Risk Email Alerts</span>
-                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">Receive warnings automatically when a register drops below goal.</span>
+                <span className="text-slate-800 dark:text-[#F8FAFC] block">Browser Notifications</span>
+                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">
+                  {isSupported ? 'Receive real-time push alerts on this device.' : 'Not supported on this browser.'}
+                </span>
               </div>
               <input
                 type="checkbox"
-                checked={emailAlerts}
-                onChange={(e) => setEmailAlerts(e.target.checked)}
-                className="w-9 h-5 bg-slate-200 dark:bg-slate-700 checked:bg-indigo-600 rounded-full appearance-none cursor-pointer transition-colors relative before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform"
+                checked={permission === 'granted'}
+                disabled={!isSupported || permission === 'denied'}
+                onChange={handleNotificationToggle}
+                className="w-9 h-5 bg-slate-200 dark:bg-slate-700 checked:bg-indigo-600 rounded-full appearance-none cursor-pointer transition-colors relative before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform disabled:opacity-50"
               />
             </div>
 
-            {/* Row 2 */}
-            <div className="flex items-center justify-between gap-4 text-xs font-semibold border-t border-slate-50 dark:border-[#334155] pt-4">
+            {/* Row 2: Attendance Alerts (Coming Soon) */}
+            <div className="flex items-center justify-between gap-4 text-xs font-semibold border-t border-slate-50 dark:border-[#334155] pt-4 opacity-50">
               <div>
-                <span className="text-slate-800 dark:text-[#F8FAFC] block">Daily Lecture Reminders</span>
-                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">Push reminder checklist notification to register today's attendance logs.</span>
+                <span className="text-slate-800 dark:text-[#F8FAFC] block">Attendance Alerts (Coming Soon)</span>
+                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">Critical low attendance warnings.</span>
               </div>
-              <input
-                type="checkbox"
-                checked={dailyReminders}
-                onChange={(e) => setDailyReminders(e.target.checked)}
-                className="w-9 h-5 bg-slate-200 dark:bg-slate-700 checked:bg-indigo-600 rounded-full appearance-none cursor-pointer transition-colors relative before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform"
-              />
+              <input type="checkbox" disabled className="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" />
+            </div>
+
+            {/* Row 3: AI Recommendations (Coming Soon) */}
+            <div className="flex items-center justify-between gap-4 text-xs font-semibold border-t border-slate-50 dark:border-[#334155] pt-4 opacity-50">
+              <div>
+                <span className="text-slate-800 dark:text-[#F8FAFC] block">AI Recommendations (Coming Soon)</span>
+                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">Daily actionable tasks.</span>
+              </div>
+              <input type="checkbox" disabled className="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" />
+            </div>
+
+            {/* Row 4: Weekly Summary (Coming Soon) */}
+            <div className="flex items-center justify-between gap-4 text-xs font-semibold border-t border-slate-50 dark:border-[#334155] pt-4 opacity-50">
+              <div>
+                <span className="text-slate-800 dark:text-[#F8FAFC] block">Weekly Summary (Coming Soon)</span>
+                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">Recap of your week's performance.</span>
+              </div>
+              <input type="checkbox" disabled className="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" />
+            </div>
+
+            {/* Row 5: System Updates (Coming Soon) */}
+            <div className="flex items-center justify-between gap-4 text-xs font-semibold border-t border-slate-50 dark:border-[#334155] pt-4 opacity-50">
+              <div>
+                <span className="text-slate-800 dark:text-[#F8FAFC] block">System Updates (Coming Soon)</span>
+                <span className="text-[10px] text-slate-400 dark:text-[#CBD5E1] font-medium block mt-0.5">New features and improvements.</span>
+              </div>
+              <input type="checkbox" disabled className="w-9 h-5 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* PWA Status */}
+        <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs space-y-5">
+          <h3 className="text-sm font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
+            <Smartphone className="w-4.5 h-4.5 text-indigo-500" />
+            PWA Status
+          </h3>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">Service Worker</span>
+              <span className="font-semibold text-slate-900 dark:text-white">
+                {'serviceWorker' in navigator ? 'Active' : 'Unsupported'}
+              </span>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">Installation</span>
+              <span className="font-semibold text-slate-900 dark:text-white">
+                {window.matchMedia('(display-mode: standalone)').matches ? 'Installed' : 'Browser Mode'}
+              </span>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">Network</span>
+              <span className="font-semibold text-slate-900 dark:text-white">
+                {navigator.onLine ? 'Online' : 'Offline'}
+              </span>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">Permissions</span>
+              <span className="font-semibold text-slate-900 dark:text-white capitalize">
+                {permission}
+              </span>
             </div>
           </div>
         </div>

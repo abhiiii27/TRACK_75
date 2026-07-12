@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Track75</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --text-secondary: #64748b;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --text: #f8fafc;
+                --text-secondary: #94a3b8;
+            }
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+        .icon-container {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: rgba(99, 102, 241, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        .icon {
+            width: 64px;
+            height: 64px;
+            color: var(--primary);
+        }
+        h1 {
+            font-size: 1.875rem;
+            margin: 0;
+            font-weight: 700;
+        }
+        p {
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+        .buttons {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-top: 16px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text);
+            border: 2px solid var(--text-secondary);
+        }
+        .btn-secondary:hover {
+            border-color: var(--text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon-container">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 1l22 22"></path>
+                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                <line x1="12" y1="20" x2="12.01" y2="20"></line>
+            </svg>
+        </div>
+        <div>
+            <h1>You're offline.</h1>
+            <p>Please check your internet connection.</p>
+            <p style="font-size: 0.875rem; margin-top: 8px;">(Previously cached resources and the Track75 app remain available.)</p>
+        </div>
+        <div class="buttons">
+            <button class="btn-primary" onclick="window.location.reload()">Retry</button>
+            <button class="btn-secondary" onclick="window.location.href='/'">Return Home</button>
+        </div>
+    </div>
+</body>
+</html>
