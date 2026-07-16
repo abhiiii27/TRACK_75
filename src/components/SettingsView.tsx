@@ -12,7 +12,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
-import { useNotificationPermission } from '../hooks/useNotificationPermission';
+import { useFCM } from '../hooks/useFCM';
 
 interface SettingsViewProps {
   onResetData: () => Promise<void>;
@@ -20,7 +20,7 @@ interface SettingsViewProps {
 
 export default function SettingsView({ onResetData }: SettingsViewProps) {
   const { theme, setTheme } = useTheme();
-  const { permission, requestPermission, isSupported } = useNotificationPermission();
+  const { permission, requestPermissionAndGetToken, disableNotifications, isSupported, isLoading } = useFCM();
   const [emailAlerts, setEmailAlerts] = useState(false); // Coming soon
   const [dailyReminders, setDailyReminders] = useState(false); // Coming soon
   const [threshold, setThreshold] = useState(75);
@@ -29,9 +29,14 @@ export default function SettingsView({ onResetData }: SettingsViewProps) {
 
   const handleNotificationToggle = async () => {
     if (permission !== 'granted') {
-      await requestPermission();
+      const token = await requestPermissionAndGetToken();
+      if (token) {
+        alert("Push notifications enabled securely! 🔔");
+      } else {
+        alert("Permission denied or failed. Please check your browser settings.");
+      }
     } else {
-      alert("Please revoke notifications from your browser settings.");
+      await disableNotifications();
     }
   };
 
@@ -135,7 +140,7 @@ export default function SettingsView({ onResetData }: SettingsViewProps) {
               <input
                 type="checkbox"
                 checked={permission === 'granted'}
-                disabled={!isSupported || permission === 'denied'}
+                disabled={!isSupported || permission === 'denied' || isLoading}
                 onChange={handleNotificationToggle}
                 className="w-9 h-5 bg-slate-200 dark:bg-slate-700 checked:bg-indigo-600 rounded-full appearance-none cursor-pointer transition-colors relative before:absolute before:w-4 before:h-4 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 checked:before:translate-x-4 before:transition-transform disabled:opacity-50"
               />

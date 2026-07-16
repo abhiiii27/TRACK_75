@@ -1421,3 +1421,108 @@ def delete_notification(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+
+# --- DEVICE TOKEN ROUTES ---
+
+@app.post("/api/device/register", response_model=schemas.DeviceTokenResponse)
+def register_device(
+    device_data: schemas.DeviceTokenCreate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    from datetime import datetime
+
+    # Check for duplicate
+    db_token = db.query(models.DeviceToken).filter(models.DeviceToken.device_token == device_data.deviceToken).first()
+    
+    if db_token:
+        # Update existing token
+        db_token.user_id = current_user.id
+        db_token.platform = device_data.platform
+        db_token.browser = device_data.browser
+        db_token.user_agent = device_data.userAgent
+        db_token.device_name = device_data.deviceName
+        db_token.is_active = True
+        db_token.last_seen = datetime.utcnow()
+        db_token.updated_at = datetime.utcnow()
+    else:
+        # Create new
+        db_token = models.DeviceToken(
+            user_id=current_user.id,
+            device_token=device_data.deviceToken,
+            platform=device_data.platform,
+            browser=device_data.browser,
+            user_agent=device_data.userAgent,
+            device_name=device_data.deviceName,
+            is_active=True
+        )
+        db.add(db_token)
+        
+    try:
+        db.commit()
+        db.refresh(db_token)
+    except Exception as e:
+        db.rollback()
+        raise e
+        
+    return db_token
+
+@app.put("/api/device/update", response_model=schemas.DeviceTokenResponse)
+def update_device(
+    device_data: schemas.DeviceTokenUpdate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    from datetime import datetime
+    
+    db_token = db.query(models.DeviceToken).filter(
+        models.DeviceToken.device_token == device_data.deviceToken,
+        models.DeviceToken.user_id == current_user.id
+    ).first()
+    
+    if not db_token:
+        raise HTTPException(status_code=404, detail="Device token not found")
+        
+    if device_data.platform: db_token.platform = device_data.platform
+    if device_data.browser: db_token.browser = device_data.browser
+    if device_data.userAgent: db_token.user_agent = device_data.userAgent
+    if device_data.deviceName: db_token.device_name = device_data.deviceName
+    
+    db_token.last_seen = datetime.utcnow()
+    db_token.updated_at = datetime.utcnow()
+    db_token.is_active = True
+    
+    db.commit()
+    db.refresh(db_token)
+    return db_token
+
+@app.delete("/api/device/remove")
+def remove_device(
+    token: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    db_token = db.query(models.DeviceToken).filter(
+        models.DeviceToken.device_token == token,
+        models.DeviceToken.user_id == current_user.id
+    ).first()
+    
+    if not db_token:
+        raise HTTPException(status_code=404, detail="Device token not found")
+        
+    # Deactivate instead of delete
+    db_token.is_active = False
+    db.commit()
+    
+    return {"status": "success", "message": "Device token deactivated"}
+
+@app.get("/api/device/list", response_model=List[schemas.DeviceTokenResponse])
+def list_devices(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    tokens = db.query(models.DeviceToken).filter(
+        models.DeviceToken.user_id == current_user.id,
+        models.DeviceToken.is_active == True
+    ).all()
+    return tokens

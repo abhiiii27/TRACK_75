@@ -12,3 +12,7 @@ __pycache__/
 
 # PWA dev-dist
 dev-dist/
+
+.env
+.env.local
+firebase-adminsdk*.json

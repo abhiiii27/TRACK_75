@@ -214,3 +214,37 @@ class NotificationResponse(BaseModel):
 class NotificationListResponse(BaseModel):
     notifications: List[NotificationResponse]
     unreadCount: int
+
+# Device Schemas
+class DeviceTokenCreate(BaseModel):
+    deviceToken: str = Field(validation_alias="device_token")
+    platform: Optional[str] = None
+    browser: Optional[str] = None
+    userAgent: Optional[str] = Field(default=None, validation_alias="user_agent")
+    deviceName: Optional[str] = Field(default=None, validation_alias="device_name")
+
+    class Config:
+        populate_by_name = True
+
+class DeviceTokenUpdate(BaseModel):
+    deviceToken: str = Field(validation_alias="device_token")
+    platform: Optional[str] = None
+    browser: Optional[str] = None
+    userAgent: Optional[str] = Field(default=None, validation_alias="user_agent")
+    deviceName: Optional[str] = Field(default=None, validation_alias="device_name")
+    
+    class Config:
+        populate_by_name = True
+
+class DeviceTokenResponse(BaseModel):
+    id: str
+    deviceToken: str = Field(validation_alias="device_token")
+    platform: Optional[str] = None
+    browser: Optional[str] = None
+    deviceName: Optional[str] = Field(default=None, validation_alias="device_name")
+    isActive: bool = Field(validation_alias="is_active")
+    lastSeen: datetime = Field(validation_alias="last_seen")
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True

@@ -23,6 +23,7 @@ class User(Base):
 
     subjects = relationship("Subject", back_populates="owner", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="owner", cascade="all, delete-orphan")
+    devices = relationship("DeviceToken", back_populates="owner", cascade="all, delete-orphan")
 
 
 class Subject(Base):
@@ -76,3 +77,21 @@ class Notification(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="notifications")
+
+class DeviceToken(Base):
+    __tablename__ = "device_tokens"
+
+    id = Column(String, primary_key=True, index=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    device_token = Column(String, unique=True, index=True, nullable=False)
+    platform = Column(String, nullable=True)     # e.g., "web", "android", "ios"
+    browser = Column(String, nullable=True)      # e.g., "Chrome", "Safari"
+    user_agent = Column(String, nullable=True)   # Raw user agent string
+    device_name = Column(String, nullable=True)  # e.g., "Abhishek's MacBook"
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    last_seen = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    owner = relationship("User", back_populates="devices")

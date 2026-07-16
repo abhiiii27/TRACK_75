@@ -62,12 +62,13 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 4B: AI Recommendation Engine** ✅ Completed
 - **Phase 5A: Smart Notification Engine** ✅ Completed
 - **Phase 5B: PWA Foundation & Browser Notification Framework** ✅ Completed
+- **Phase 5C: Firebase Cloud Messaging Infrastructure & Device Registration** ✅ Completed
 
 **Current Status:**  
-Progressive Web App (PWA) Foundation and Browser Notification Framework Completed. The application is fully installable on mobile and desktop, features an intelligent offline Service Worker app shell, native SPA routing, secure zero-data static caching, and integrates an extensible browser permission framework prepared for external push integration.
+Firebase Cloud Messaging (FCM) Infrastructure and Device Registration have been successfully integrated. The Progressive Web App now successfully requests notification permissions, registers device tokens with the FastAPI backend, and is fully configured to receive and handle background push notifications via the active Service Worker.
 
 **Next Milestones:**  
-- **Phase 5C:** External Reminder System (Web Push / Email Integrations)
+- **Phase 5C.3:** Smart Push Notifications (Delivery)
 - **Phase 6:** Production Deployment
 
 ---
@@ -91,6 +92,8 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 - **Service Worker & Offline App Shell** — reliable offline caching, SPA routing support, and native fallback mechanisms.
 - **Secure Static Asset Caching** — aggressive caching of UI components with explicit zero-caching rules for sensitive attendance data and JWTs.
 - **Browser Notification Framework** — extensible local notification system and permission state management built for push readiness.
+- **Firebase Cloud Messaging Infrastructure** — active FCM Service Worker registry capable of intercepting background web pushes.
+- **Device Registration** — backend token sync (`POST /api/device/register`) to map active browser device tokens to user accounts for targeted notifications.
 - **Install Prompt & PWA Diagnostics** — intelligent `beforeinstallprompt` interception, 7-day snooze logic, and over-the-air Service Worker update tools.
 - **SQLite Persistence** — fully persistent relational data backed by SQLAlchemy
 - **Mobile-first User Experience** — touch-friendly native-feeling components (bottom navigation, bottom sheets, mobile modals)
@@ -111,6 +114,7 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 | **Lucide React** | Icon system |
 | **vite-plugin-pwa** | Service Worker, Manifest, and PWA generation |
 | **Workbox** | Production cache strategy and offline routing |
+| **Firebase Web SDK** | Cloud Messaging token generation and client library |
 
 ### Backend
 
@@ -120,6 +124,7 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 | **SQLAlchemy** | ORM for relational database interactions |
 | **PyJWT** | Stateless JWT authentication |
 | **bcrypt** | Secure password hashing |
+| **Firebase Admin SDK** | Secure server-to-device push notification delivery |
 
 ### Data
 
@@ -136,7 +141,7 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 │  Browser (React + Vite)  │
 │  - Mobile-First UI       │
 │  - State Management      │
-│  - Theme context         │
+│  - FCM Service Worker    │
 └────────────┬─────────────┘
              │  REST (/api/*) + Bearer JWT
              ▼
@@ -145,7 +150,7 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 │  - Auth middleware       │
 │  - Subject endpoints     │
 │  - Attendance CRUD       │
-│  - Stats & risk engine   │
+│  - Device Registration   │
 └────────────┬─────────────┘
              │  SQLAlchemy ORM
              ▼
@@ -153,7 +158,7 @@ Progressive Web App (PWA) Foundation and Browser Notification Framework Complete
 │  SQLite Database         │
 │  (track75.db)            │
 │  - Users, Subjects,      │
-│  - AttendanceRecords     │
+│  - DeviceTokens          │
 └──────────────────────────┘
 ```
 
@@ -168,21 +173,23 @@ TRACK_75/
 ├── src/                      # Frontend Source (React/Vite)
 │   ├── App.tsx               # Top-level app shell, auth gate, routing
 │   ├── types.ts              # Shared TypeScript interfaces
-│   ├── index.css             # Tailwind entry
+│   ├── firebase/             # FCM Configuration and utilities
+│   ├── hooks/useFCM.ts       # Cloud messaging hook
 │   └── components/
 │       ├── AuthView.tsx      # Login, register, profile-setup
 │       ├── DashboardView.tsx # Home dashboard
-│       ├── SubjectsView.tsx  # Full subject list
-│       ├── SubjectCard.tsx   # Individual subject tile with actions
-│       ├── SubjectDetailsView.tsx # Deep-dive stats & history timeline
+│       ├── SettingsView.tsx  # Device notification toggles
 │       └── ...
+│
+├── public/
+│   └── firebase-cloud-messaging-sw.js # Active background push worker
 │
 ├── fastapi/                  # Backend Source (Python/FastAPI)
 │   ├── main.py               # FastAPI application & endpoints
-│   ├── models.py             # SQLAlchemy models
+│   ├── models.py             # SQLAlchemy models (User, Subject, DeviceToken)
 │   ├── schemas.py            # Pydantic validation schemas
 │   ├── database.py           # SQLite connection & session
-│   ├── auth.py               # JWT logic & password hashing
+│   ├── services/             # External Integrations (Firebase Admin)
 │   └── requirements.txt      # Python dependencies
 │
 ├── vite.config.ts            # Vite proxy & build config
@@ -214,7 +221,18 @@ pip install -r requirements.txt
 
 ### Environment Variables
 
-Create a `.env` file in the `fastapi/` directory:
+Create a `.env` file in the root directory for frontend Vite variables:
+```env
+VITE_FIREBASE_API_KEY="your_api_key"
+VITE_FIREBASE_AUTH_DOMAIN="your_domain"
+VITE_FIREBASE_PROJECT_ID="your_project_id"
+VITE_FIREBASE_STORAGE_BUCKET="your_bucket"
+VITE_FIREBASE_MESSAGING_SENDER_ID="your_sender_id"
+VITE_FIREBASE_APP_ID="your_app_id"
+VITE_FIREBASE_VAPID_KEY="your_vapid_key"
+```
+
+Create a `.env` file in the `fastapi/` directory for backend secrets:
 
 ```env
 JWT_SECRET=your_super_secret_key_here

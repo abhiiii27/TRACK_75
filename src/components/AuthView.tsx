@@ -91,8 +91,9 @@ export default function AuthView({ onAuthSuccess, initialStage = 'splash' }: Aut
         }
       });
       if (res.ok) {
-        const data = await res.json();
-        if (data.user.setupComplete) {
+        const contentType = res.headers.get("content-type");
+        const data = contentType && contentType.includes("application/json") ? await res.json() : {};
+        if (data.user?.setupComplete) {
           onAuthSuccess(token, data.user);
         } else {
           // Token is valid but user hasn't completed setup
@@ -130,7 +131,15 @@ export default function AuthView({ onAuthSuccess, initialStage = 'splash' }: Aut
         body: JSON.stringify({ email, password })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server Error: ${res.status} ${text.substring(0, 50)}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.error || 'Authentication failed. Please try again.');
       }
@@ -191,7 +200,15 @@ export default function AuthView({ onAuthSuccess, initialStage = 'splash' }: Aut
         body: JSON.stringify({ fullName, email, password })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server Error: ${res.status} ${text.substring(0, 50)}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.error || 'Registration failed. Please try again.');
       }
@@ -242,7 +259,15 @@ export default function AuthView({ onAuthSuccess, initialStage = 'splash' }: Aut
         })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data: any = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server Error: ${res.status} ${text.substring(0, 50)}`);
+      }
+
       if (!res.ok) {
         throw new Error(data.error || 'Profile setup failed.');
       }
