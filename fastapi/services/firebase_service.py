@@ -59,78 +59,87 @@ def validate_token(token: str) -> bool:
         logger.error(f"Unexpected token validation error: {str(e)}")
         return False
 
-def delete_invalid_token(db_session, device_token_str: str):
-    """
-    Helper to mark a token as inactive in DB (avoid permanent deletion to keep audit).
-    Needs to import models inline to prevent circular imports if necessary.
-    """
-    from models import DeviceToken
-    try:
-        db_token = db_session.query(DeviceToken).filter(DeviceToken.device_token == device_token_str).first()
-        if db_token:
-            db_token.is_active = False
-            db_session.commit()
-    except Exception as e:
-        logger.error(f"Failed to deactivate invalid token: {str(e)}")
+import uuid
+from datetime import datetime
 
-def send_notification(token: str, title: str, body: str, data: Optional[dict] = None) -> bool:
-    """
-    Sends a push notification to a single device token.
-    """
-    if not is_configured():
-        return False
+class NotificationService:
+    @staticmethod
+    def deactivate_invalid_token(db_session, token_str: str, reason: str):
+        from models import DeviceToken
+        try:
+            db_token = db_session.query(DeviceToken).filter(DeviceToken.device_token == token_str).first()
+            if db_token and db_token.is_active:
+                db_token.is_active = False
+                db_token.deactivated_reason = reason
+                db_token.deactivated_at = datetime.utcnow()
+                db_session.commit()
+                logger.info(f"Deactivated token {token_str[:10]}... Reason: {reason}")
+        except Exception as e:
+            logger.error(f"Failed to deactivate token: {str(e)}")
+            db_session.rollback()
 
-    try:
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            data=data if data else {},
-            token=token,
-        )
-        messaging.send(message)
-        return True
-    except messaging.UnregisteredError:
-        logger.info(f"Token unregistered: {token}")
-        return False
-    except FirebaseError as e:
-        logger.error(f"Firebase send error: {str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected send error: {str(e)}")
-        return False
+    @staticmethod
+    def send_multicast(db_session, tokens: List[str], title: str, body: str, icon: str = "/icon-192x192.png", data: Optional[dict] = None) -> dict:
+        if not is_configured() or not tokens:
+            return {
+                "successCount": 0,
+                "failureCount": 0,
+                "successfulDevices": [],
+                "failedDevices": [],
+                "deactivatedTokens": []
+            }
 
-def send_multicast_notification(tokens: List[str], title: str, body: str, data: Optional[dict] = None) -> List[str]:
-    """
-    Sends a push notification to multiple tokens.
-    Returns a list of failed tokens (e.g. unregistered ones).
-    """
-    if not is_configured() or not tokens:
-        return []
+        # Ensure notificationId exists
+        if not data:
+            data = {}
+        if "notificationId" not in data:
+            data["notificationId"] = str(uuid.uuid4())
 
-    try:
-        message = messaging.MulticastMessage(
-            notification=messaging.Notification(
-                title=title,
-                body=body,
-            ),
-            data=data if data else {},
-            tokens=tokens,
-        )
-        response = messaging.send_each_for_multicast(message)
-        
-        failed_tokens = []
-        if response.failure_count > 0:
-            responses = response.responses
-            for idx, resp in enumerate(responses):
-                if not resp.success:
-                    # e.g., UnregisteredError means token is no longer valid
-                    failed_tokens.append(tokens[idx])
-        return failed_tokens
-    except Exception as e:
-        logger.error(f"Multicast send error: {str(e)}")
-        return []
+        try:
+            message = messaging.MulticastMessage(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                    image=icon
+                ),
+                data=data,
+                tokens=tokens,
+            )
+            response = messaging.send_each_for_multicast(message)
+            
+            successful_devices = []
+            failed_devices = []
+            deactivated_tokens = []
+
+            for idx, resp in enumerate(response.responses):
+                token = tokens[idx]
+                if resp.success:
+                    successful_devices.append(token)
+                else:
+                    failed_devices.append(token)
+                    # Handle specific invalid token errors
+                    err_code = resp.exception.code if resp.exception else "unknown"
+                    if err_code in ["registration-token-not-registered", "invalid-registration-token", "NOT_FOUND", "INVALID_ARGUMENT"]:
+                        NotificationService.deactivate_invalid_token(db_session, token, err_code)
+                        deactivated_tokens.append(token)
+
+            return {
+                "successCount": response.success_count,
+                "failureCount": response.failure_count,
+                "successfulDevices": successful_devices,
+                "failedDevices": failed_devices,
+                "deactivatedTokens": deactivated_tokens
+            }
+        except Exception as e:
+            logger.error(f"Multicast send error: {str(e)}")
+            return {
+                "successCount": 0,
+                "failureCount": len(tokens),
+                "successfulDevices": [],
+                "failedDevices": tokens,
+                "deactivatedTokens": [],
+                "error": str(e)
+            }
 
 # Initialize immediately when module loads
 initialize_firebase()

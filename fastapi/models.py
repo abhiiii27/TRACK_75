@@ -89,6 +89,8 @@ class DeviceToken(Base):
     user_agent = Column(String, nullable=True)   # Raw user agent string
     device_name = Column(String, nullable=True)  # e.g., "Abhishek's MacBook"
     is_active = Column(Boolean, default=True, nullable=False)
+    deactivated_reason = Column(String, nullable=True)
+    deactivated_at = Column(DateTime, nullable=True)
     
     last_seen = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)

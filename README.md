@@ -63,12 +63,13 @@ The product is opinionated around the **75% eligibility rule** that governs most
 - **Phase 5A: Smart Notification Engine** ✅ Completed
 - **Phase 5B: PWA Foundation & Browser Notification Framework** ✅ Completed
 - **Phase 5C: Firebase Cloud Messaging Infrastructure & Device Registration** ✅ Completed
+- **Phase 5C.3A: Push Notification Delivery Engine** ✅ Completed
 
 **Current Status:**  
-Firebase Cloud Messaging (FCM) Infrastructure and Device Registration have been successfully integrated. The Progressive Web App now successfully requests notification permissions, registers device tokens with the FastAPI backend, and is fully configured to receive and handle background push notifications via the active Service Worker.
+The complete Firebase Cloud Messaging push notification delivery pipeline is now implemented. The FastAPI backend uses the Firebase Admin SDK to send real multicast push notifications to registered browser devices. The PWA registers FCM device tokens automatically on login, stores them in SQLite, and receives background push notifications via an active Service Worker. The database path is now anchored absolutely to prevent multi-DB drift.
 
 **Next Milestones:**  
-- **Phase 5C.3:** Smart Push Notifications (Delivery)
+- **Phase 5C.3B:** Attendance-triggered smart push notification dispatch
 - **Phase 6:** Production Deployment
 
 ---
@@ -298,6 +299,24 @@ All endpoints require a `Bearer <token>` header except for `/api/auth/register` 
 | `GET`  | `/api/analytics` | Comprehensive weekly/monthly metrics, heatmaps, and chart datasets. |
 | `GET`  | `/api/ai/predict` | AI Attendance Prediction Engine for forecasting end-of-semester trends. |
 | `GET`  | `/api/ai/recommendations` | AI Recommendation Engine generating priority tasks and recovery plans. |
+
+### Notifications
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET`  | `/api/notifications` | List all smart notifications for the current user. |
+| `PUT`  | `/api/notifications/{id}/read` | Mark a notification as read. |
+| `PUT`  | `/api/notifications/{id}/resolve` | Mark a notification as resolved. |
+| `DELETE` | `/api/notifications/{id}` | Delete a notification. |
+
+### Device & Push Notifications
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/device/register` | Register a browser FCM device token for push delivery. |
+| `PUT`  | `/api/device/update` | Update device token metadata. |
+| `DELETE` | `/api/device/remove` | Deactivate and remove a device token. |
+| `POST` | `/api/notifications/test` | Send a Firebase multicast test push to all active devices. |
 
 ---
 

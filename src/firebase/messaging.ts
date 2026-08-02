@@ -46,20 +46,18 @@ export const getFCMToken = async (): Promise<string | null> => {
       console.warn("VITE_FIREBASE_VAPID_KEY is missing from environment variables.");
     }
 
-    // Wait for the active Service Worker
+    // Wait for the active Service Worker before requesting the token
     const registration = await navigator.serviceWorker.ready;
-    console.log("Service Worker Ready");
 
-    const currentToken = await getToken(messaging, { 
+    const currentToken = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,
     });
     
     if (currentToken) {
-      console.log("Token Generated");
       return currentToken;
     } else {
-      console.log("No registration token available. Request permission to generate one.");
+      console.warn("No FCM registration token available. Request permission to generate one.");
       return null;
     }
   } catch (err) {
@@ -79,4 +77,53 @@ export const removeFCMToken = async (): Promise<boolean> => {
     console.error("Error deleting FCM token", err);
     return false;
   }
+};
+
+const recentNotificationIds = new Set<string>();
+
+export const setupForegroundListener = () => {
+  if (!app || !isNotificationSupported()) return null;
+
+  import("firebase/messaging").then(({ getMessaging, onMessage }) => {
+    const messaging = getMessaging(app);
+    
+    onMessage(messaging, async (payload) => {
+      
+      const notificationId = payload.data?.notificationId;
+      if (notificationId) {
+        if (recentNotificationIds.has(notificationId)) {
+          return; // deduplicated
+        }
+        recentNotificationIds.add(notificationId);
+        // Clean up old IDs to prevent memory leak
+        if (recentNotificationIds.size > 50) {
+          const firstItem = recentNotificationIds.values().next().value;
+          if (firstItem) recentNotificationIds.delete(firstItem);
+        }
+      }
+
+      if (Notification.permission === 'granted') {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const dataPayload = payload.data || {};
+          const title = payload.notification?.title || dataPayload.title || 'Track75 Alert';
+          
+          registration.showNotification(title, {
+            body: payload.notification?.body || dataPayload.body || 'You have a new message.',
+            icon: payload.notification?.icon || '/icon-192x192.png',
+            badge: '/icon-192x192.png',
+            tag: notificationId || 'default-tag',
+            data: {
+              click_action: dataPayload.click_action || '/',
+              notificationId: notificationId
+            }
+          });
+        } catch (e) {
+          console.error("Error showing foreground notification:", e);
+        }
+      }
+    });
+  }).catch(err => {
+    console.error("Failed to setup foreground listener", err);
+  });
 };

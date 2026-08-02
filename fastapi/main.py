@@ -1415,12 +1415,143 @@ def delete_notification(
         raise HTTPException(status_code=404, detail="Notification not found")
     db.delete(notif)
     db.commit()
+# --- Notification Routes ---
+
+@app.get("/api/notifications", response_model=schemas.NotificationListResponse)
+def get_notifications(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    # Generate/refresh notifications based on current state
+    generate_notifications(db, current_user)
+
+    # Priority sort: Critical → Warning → Success → Info; newest first within same type
+    type_order = {"Critical": 0, "Warning": 1, "Success": 2, "Info": 3}
+    status_order = {"unread": 0, "read": 1, "resolved": 2}
+
+    notifs = (
+        db.query(models.Notification)
+        .filter(models.Notification.user_id == current_user.id)
+        .all()
+    )
+    notifs.sort(key=lambda n: (
+        status_order.get(n.status, 9),
+        type_order.get(n.type, 9),
+        -(n.created_at.timestamp() if n.created_at else 0)
+    ))
+
+    unread_count = sum(1 for n in notifs if n.status == "unread")
+    return schemas.NotificationListResponse(
+        notifications=notifs,
+        unreadCount=unread_count,
+    )
+
+
+@app.put("/api/notifications/{notif_id}/read")
+def read_notification(
+    notif_id: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    notif = (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.id == notif_id,
+            models.Notification.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    if notif.status == "unread":
+        notif.status = "read"
+        notif.updated_at = datetime.utcnow()
+        db.commit()
+    return {"message": "Notification marked as read"}
+
+
+@app.put("/api/notifications/read-all")
+def read_all_notifications(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    db.query(models.Notification).filter(
+        models.Notification.user_id == current_user.id,
+        models.Notification.status == "unread",
+    ).update({"status": "read", "updated_at": datetime.utcnow()})
+    db.commit()
+    return {"message": "All notifications marked as read"}
+
+
+@app.delete("/api/notifications/{notif_id}")
+def delete_notification(
+    notif_id: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    notif = (
+        db.query(models.Notification)
+        .filter(
+            models.Notification.id == notif_id,
+            models.Notification.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not notif:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    db.delete(notif)
+    db.commit()
     return {"message": "Notification deleted"}
 
 
+@app.post("/api/notifications/test")
+def test_notification(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    from services.firebase_service import NotificationService
+    from datetime import datetime
+    import uuid
+
+    # Fetch active tokens
+    db_tokens = db.query(models.DeviceToken).filter(
+        models.DeviceToken.user_id == current_user.id,
+        models.DeviceToken.is_active == True
+    ).all()
+
+    tokens = [t.device_token for t in db_tokens]
+
+    if not tokens:
+        return {
+            "successCount": 0,
+            "failureCount": 0,
+            "message": "No active device tokens found for the user."
+        }
+
+    title = "Track75 Test Notification"
+    body = "Congratulations!\nFirebase Cloud Messaging is working successfully."
+    
+    data = {
+        "notificationId": str(uuid.uuid4()),
+        "type": "test",
+        "click_action": "/",
+        "timestamp": datetime.utcnow().isoformat(),
+        "source": "Track75"
+    }
+
+    results = NotificationService.send_multicast(
+        db_session=db,
+        tokens=tokens,
+        title=title,
+        body=body,
+        data=data
+    )
+
+    return results
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)
 
 # --- DEVICE TOKEN ROUTES ---
 
@@ -1432,11 +1563,12 @@ def register_device(
 ):
     from datetime import datetime
 
-    # Check for duplicate
-    db_token = db.query(models.DeviceToken).filter(models.DeviceToken.device_token == device_data.deviceToken).first()
-    
+    # Upsert: update existing token or create new one
+    db_token = db.query(models.DeviceToken).filter(
+        models.DeviceToken.device_token == device_data.deviceToken
+    ).first()
+
     if db_token:
-        # Update existing token
         db_token.user_id = current_user.id
         db_token.platform = device_data.platform
         db_token.browser = device_data.browser
@@ -1446,7 +1578,6 @@ def register_device(
         db_token.last_seen = datetime.utcnow()
         db_token.updated_at = datetime.utcnow()
     else:
-        # Create new
         db_token = models.DeviceToken(
             user_id=current_user.id,
             device_token=device_data.deviceToken,
@@ -1457,14 +1588,14 @@ def register_device(
             is_active=True
         )
         db.add(db_token)
-        
+
     try:
         db.commit()
         db.refresh(db_token)
     except Exception as e:
         db.rollback()
         raise e
-        
+
     return db_token
 
 @app.put("/api/device/update", response_model=schemas.DeviceTokenResponse)

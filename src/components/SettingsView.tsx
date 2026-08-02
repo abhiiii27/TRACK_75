@@ -20,7 +20,7 @@ interface SettingsViewProps {
 
 export default function SettingsView({ onResetData }: SettingsViewProps) {
   const { theme, setTheme } = useTheme();
-  const { permission, requestPermissionAndGetToken, disableNotifications, isSupported, isLoading } = useFCM();
+  const { permission, requestPermissionAndGetToken, disableNotifications, refreshToken, isSupported, isLoading, token } = useFCM();
   const [emailAlerts, setEmailAlerts] = useState(false); // Coming soon
   const [dailyReminders, setDailyReminders] = useState(false); // Coming soon
   const [threshold, setThreshold] = useState(75);
@@ -275,6 +275,67 @@ export default function SettingsView({ onResetData }: SettingsViewProps) {
           </div>
         </div>
 
+        {/* Developer Tools */}
+        {import.meta.env.DEV && (
+          <div className="bg-indigo-50/40 dark:bg-indigo-950/10 rounded-3xl p-6 border border-indigo-100 dark:border-indigo-900/40 shadow-xs space-y-5">
+            <h3 className="text-sm font-extrabold text-indigo-900 dark:text-indigo-400 tracking-tight flex items-center gap-2">
+              <Sparkles className="w-4.5 h-4.5 text-indigo-500" />
+              Developer Tools (DEV ONLY)
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="bg-white dark:bg-[#1F2937] p-4 rounded-2xl border border-slate-100 dark:border-[#334155] space-y-2">
+                <h4 className="font-bold text-slate-800 dark:text-white mb-2 border-b border-slate-100 dark:border-[#334155] pb-2">Push Notification Engine</h4>
+                <button
+                  onClick={async () => {
+                    try {
+                      const authToken = localStorage.getItem('auth_token');
+                      const res = await fetch('/api/notifications/test', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        alert(`Notification Sent Successfully!\nSuccess: ${data.successCount}, Failed: ${data.failureCount}`);
+                      } else {
+                        alert('Notification Failed.');
+                      }
+                    } catch (e) {
+                      alert('Notification Request Error');
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  <Bell className="w-4 h-4" />
+                  Send Test Notification
+                </button>
+                <button
+                  onClick={refreshToken}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-white font-bold rounded-xl text-xs transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {isLoading ? 'Refreshing...' : 'Refresh Device Status'}
+                </button>
+              </div>
+
+              <div className="bg-white dark:bg-[#1F2937] p-4 rounded-2xl border border-slate-100 dark:border-[#334155] overflow-hidden space-y-2">
+                <h4 className="font-bold text-slate-800 dark:text-white mb-2 border-b border-slate-100 dark:border-[#334155] pb-2">Diagnostics</h4>
+                <div className="space-y-1 font-mono text-[10px]">
+                  <p className="flex justify-between"><span className="text-slate-500">Environment:</span> <span className="text-indigo-600 dark:text-indigo-400">Development</span></p>
+                  <p className="flex justify-between"><span className="text-slate-500">Service Worker:</span> <span className="text-indigo-600 dark:text-indigo-400">{'serviceWorker' in navigator ? 'Active' : 'Inactive'}</span></p>
+                  <p className="flex justify-between"><span className="text-slate-500">FCM Status:</span> <span className="text-indigo-600 dark:text-indigo-400">{isSupported ? 'Ready' : 'Not Supported'}</span></p>
+                  <p className="flex justify-between"><span className="text-slate-500">Permission:</span> <span className="text-indigo-600 dark:text-indigo-400">{permission}</span></p>
+                  <p className="flex justify-between"><span className="text-slate-500">Registered:</span> <span className="text-indigo-600 dark:text-indigo-400">{token ? 'Yes' : 'No'}</span></p>
+                  <div className="pt-2 mt-2 border-t border-slate-100 dark:border-[#334155]">
+                    <span className="text-slate-500 block mb-1">Current Token (Truncated):</span>
+                    <span className="text-slate-700 dark:text-slate-300 break-all">{token ? `${token.substring(0, 20)}...` : 'None'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
     </div>
