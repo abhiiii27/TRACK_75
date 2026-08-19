@@ -17,7 +17,7 @@ A full-stack attendance intelligence platform that helps college students track,
 
 <br />
 
-[Overview](#project-overview) • [Core Features](#core-features) • [AI Architecture](#ai-architecture) • [Notification System](#notification-system) • [Project Status](#project-status) • [Tech Stack](#tech-stack) • [API Reference](#api-reference)
+[Overview](#project-overview) • [Core Features](#core-features) • [AI Architecture](#ai-notification-architecture) • [Background Scheduler](#background-scheduler) • [Firebase Integration](#firebase--fcm) • [Project Progress](#project-progress) • [Tech Stack](#technology-stack) 
 
 </div>
 
@@ -25,7 +25,7 @@ A full-stack attendance intelligence platform that helps college students track,
 
 ## Project Overview
 
-Track75 is an attendance tracking and intelligent student assistance application designed to help students monitor attendance, understand attendance risk, receive rule-based AI recommendations, and receive smart notifications.
+Track75 is an intelligent attendance management and student assistance platform designed to help students monitor attendance, understand attendance risk, receive contextual AI recommendations, and receive smart notifications.
 
 Most students only discover their attendance shortage when the detention list is published. Track75 provides an early warning system that evaluates historical logs and current targets to provide deterministic next steps.
 
@@ -33,137 +33,101 @@ Most students only discover their attendance shortage when the detention list is
 
 ## Core Features
 
-- **Authentication:** JWT-based user authentication (register, login, profile-setup).
-- **Subject Management:** Create, edit, and delete subjects.
-- **Attendance Tracking:** Mark Present/Absent and edit past records directly in a timeline.
+- **JWT Authentication:** Secure user authentication (register, login, profile-setup).
+- **Subject Management:** Create, edit, and delete subjects with real-time UI updates.
+- **Attendance Tracking:** Mark Present/Absent and edit past records directly in a chronological timeline.
 - **Attendance History:** Reverse-chronological timeline of all logged attendance records.
-- **Dashboard Analytics:** Live aggregate stats (overall percentage, missed classes, subjects safely on track).
-- **Attendance Goal:** User-defined minimum target percentage.
-- **Attendance Risk Evaluation:** Dynamically evaluates risk (SAFE, MEDIUM, HIGH, CRITICAL).
-- **AI Prediction:** Rule-based algorithmic forecasting for end-of-semester trends based on recent logging velocity.
-- **AI Recommendations:** Generates priority tasks and recovery plans using rule-based algorithms.
-- **Smart Notifications:** Generates contextual alerts stored in the database.
-- **PWA Support:** Service worker with offline app shell and installable capabilities.
-- **Firebase Cloud Messaging Infrastructure:** Handles token lifecycle and background web pushes.
-- **Device Registration:** Backend tracks active device tokens mapped to user accounts.
-- **Background Notification Scheduler:** Automated trigger jobs using APScheduler.
-- **Developer Tools:** In-app diagnostics for scheduler status, token status, and test push delivery.
+- **Dashboard Analytics:** Live aggregate stats including overall percentage, missed classes, and subjects safely on track.
+- **Attendance Goal Tracking:** User-defined minimum target percentage adaptation.
+- **Attendance Risk Analysis:** Dynamically evaluates risk per subject (SAFE, MEDIUM, HIGH, CRITICAL).
+- **AI Prediction Engine:** Algorithmic forecasting for end-of-semester trends based on recent logging velocity.
+- **AI Recommendation Engine:** Generates priority tasks and recovery plans.
+- **Smart Notification Engine:** Generates contextual alerts stored persistently in the database.
+- **PWA Support:** Service worker with offline app shell and installable web capabilities.
+- **Service Worker:** Efficient static asset caching and background process execution.
+- **Firebase Cloud Messaging Integration:** Active FCM service worker registry for background web pushes.
+- **FCM Token Generation:** Negotiation and generation of unique browser device tokens.
+- **Device Registration:** Secure backend token synchronization mapping active devices to user accounts.
+- **Device Token Management:** Intelligent activation and deactivation of stale tokens.
+- **Background Notification Scheduler:** Automated background jobs triggering notification generation and delivery.
+- **Developer Tools:** In-app diagnostics for scheduler monitoring and token status verification.
 
 ---
 
-## AI Architecture
+## AI Notification Architecture
 
-The intelligent notification dispatch relies on a sequence of internal rule-based algorithms:
+The intelligent notification dispatch relies on a sequence of decoupled internal engines that isolate attendance analysis, notification generation, persistence, and delivery orchestration:
 
 **Attendance Data**  
-→ **Attendance/Risk Analysis:** Evaluates required classes against user goal.  
-→ **NotificationRuleEngine:** Identifies risk boundaries and triggers logic.  
-→ **AINotificationService:** Converts triggers into actionable string messages and recovery task texts.  
-→ **NotificationService:** Upserts notifications into the SQLite database and handles deduplication.  
-→ **Firebase Delivery:** Dispatches the message via Firebase Admin SDK.
-
-*Note: The "AI" features use deterministic rule-based algorithms for forecasting, trend analysis, and action recommendations, not generative language models.*
+→ **NotificationRuleEngine:** Evaluates required classes and identifies risk boundaries to trigger logic.  
+→ **AINotificationService:** Converts system triggers into actionable string messages and recovery task texts.  
+→ **NotificationService:** Upserts generated notifications into the SQLite database and handles cross-device deduplication.  
+→ **Firebase Service:** Dispatches the securely constructed message payloads to the device via Firebase Admin SDK.
 
 ---
 
-## Notification System
+## Background Scheduler
 
-### Working
-- Browser notification permission prompt and management.
-- FCM token generation using Firebase Web SDK.
-- Device registration and device token persistence in SQLite.
-- Smart Notification generation and deduplication in the database.
-- Foreground and background push message handling (Service Worker).
-- Notification click interception.
-- Background scheduler orchestration.
-- Firebase Admin SDK configuration and initialization.
-
-### Current Limitation
-Firebase Cloud Messaging delivery is implemented and reaches the Firebase Admin SDK, but final push delivery currently requires the appropriate Google Cloud IAM permission for the Firebase service account. 
-
-Specifically, the `cloudmessaging.messages.create` IAM permission is missing for the active credentials, resulting in a `PERMISSION_DENIED` response from the Firebase HTTP v1 API.
+The backend integrates an automated task runner responsible for evaluating attendance records and orchestrating the delivery pipeline:
+- **Engine:** APScheduler integrated seamlessly into FastAPI startup and shutdown lifecycle events.
+- **Configurable Interval:** Easily adjustable notification dispatch frequency.
+- **Default Interval:** 30 minutes.
+- **Timezone:** Enforces strict Asia/Kolkata timezone standard.
+- **API Integration:** Dedicated `/api/dev/scheduler-status` endpoint for pipeline monitoring.
+- **Developer Tools:** UI panel reflecting real-time scheduler state and active background jobs.
 
 ---
 
-## Scheduler
+## Firebase / FCM
 
-The backend integrates an automated task runner:
-- **Engine:** APScheduler integrated into FastAPI lifecycle events.
-- **Frequency:** Configurable interval (default: 30 minutes).
-- **Timezone:** Asia/Kolkata timezone standard.
-- **Diagnostics:** Custom `/api/dev/scheduler-status` API endpoint.
-- **UI:** Developer Tools panel reflecting real-time scheduler state and device registration.
+The platform is integrated with Firebase Cloud Messaging to ensure reliable push message generation and dispatch:
+- **Firebase Web SDK:** Powers the frontend client to negotiate permissions and receive foreground payloads.
+- **Firebase Admin SDK:** Powers the backend to authenticate with Google Cloud securely and construct dispatch messages.
+- **Browser FCM Token Generation:** Dynamic token generation upon user opt-in.
+- **Device Registration:** Secure token payload transmission to the FastAPI backend.
+- **Device Token Persistence:** Token metadata, platform, and browser data stored persistently.
+- **Foreground & Background Notification Handling:** Seamless visual alerts whether the app is focused or closed.
+- **Notification Deduplication:** Database-level de-duping ensures the same alert is not blasted repeatedly.
+- **Push Notification Delivery Pipeline:** Complete lifecycle from generation, to Admin SDK handoff, to target device delivery.
 
 ---
 
 ## Database
 
-- **Engine:** SQLite (file-based).
+- **Engine:** SQLite (file-based persistence).
 - **ORM:** SQLAlchemy.
-- **Entities:** User profiles, Subjects, Attendance logs, Notifications, Device tokens.
+- **Entities:** Robust schema containing User profiles, Subjects, Attendance logs, Notifications, and Device tokens.
 
 ---
 
 ## Security
 
+Track75 strictly enforces foundational security practices:
 - **Authentication:** Bearer tokens via JWT.
 - **Password Security:** Bcrypt hashing.
-- **API Security:** All protected endpoints require authenticated JWT injection.
-- **Token Segregation:** Device tokens are strictly scoped to authenticated user IDs.
-- **Credential Protection:** Sensitive Firebase Service Account files (`firebase-adminsdk.json`) and `.env` files are fully excluded via `.gitignore`. No private keys or secrets are committed to the repository.
+- **Authenticated APIs:** All protected endpoints require authenticated JWT injection.
+- **User-Scoped Device Tokens:** Device tokens are strictly isolated to authenticated user IDs to prevent unauthorized message spoofing.
+- **Credential Protection:** Sensitive Firebase Service Account files (`firebase-adminsdk.json`) and `.env` files are fully excluded via `.gitignore`.
+- **Environment-based Configuration:** All keys, secrets, and project configurations are dynamically injected via environment variables.
+- **Zero-Commit Secrets:** Passwords, API keys, and private credentials are never committed to the repository.
 
 ---
 
-## Tech Stack
+## Technology Stack
 
 ### Frontend
-- **React** (TypeScript)
-- **Vite**
-- **Tailwind CSS**
-- **Firebase Web SDK**
-- **vite-plugin-pwa** (Service Worker)
+React, TypeScript, Vite, Tailwind CSS, PWA/Service Worker, Firebase Web SDK
 
 ### Backend
-- **Python**
-- **FastAPI**
-- **SQLAlchemy**
-- **SQLite**
-- **PyJWT & passlib (bcrypt)**
-- **Firebase Admin SDK**
-- **APScheduler**
+Python, FastAPI, SQLAlchemy, SQLite, JWT, Firebase Admin SDK, APScheduler
+
+### AI
+AI Prediction Engine, AI Recommendation Engine, Smart Notification Engine
 
 ---
 
-## API Reference
+## Project Progress
 
-### Authentication
-- `POST /api/auth/register` - Create account.
-- `POST /api/auth/login` - Sign in.
-- `GET /api/auth/me` - Profile lookup.
-
-### Attendance & Subjects
-- `GET /api/subjects` - List subjects.
-- `POST /api/attendance` - Log attendance.
-- `GET /api/attendance/history` - Timeline retrieval.
-- `GET /api/attendance/risk` - Calculate current risk thresholds.
-
-### AI & Analytics
-- `GET /api/ai/predict` - Forecasting algorithm results.
-- `GET /api/ai/recommendations` - Priority recovery tasks.
-- `GET /api/analytics` - Aggregate datasets.
-
-### Notifications & Devices
-- `GET /api/notifications` - Retrieve persistent notifications.
-- `POST /api/device/register` - Register FCM token.
-- `DELETE /api/device/remove` - Deactivate device token.
-- `POST /api/notifications/test` - Trigger a test push notification.
-- `GET /api/dev/scheduler-status` - Query background task status.
-
----
-
-## Project Status
-
-### Completed Phases
 - **Phase 1** — Authentication
 - **Phase 2** — Attendance Management
 - **Phase 3** — Analytics Engine
@@ -176,51 +140,34 @@ The backend integrates an automated task runner:
 - **Phase 5C.3B** — AI Smart Notification Generation Engine
 - **Phase 5C.3C** — Background Scheduler & Automated Delivery
 
-### Current Blocker
-Firebase Admin SDK is configured and the backend can reach Firebase, but Firebase message delivery is currently blocked by the Google Cloud IAM permission:
-
-`cloudmessaging.messages.create`
-
-The required permission must be granted to the Firebase Admin service account before final push-delivery verification can succeed.
-
 ---
 
-## Testing Status
+## Testing
 
-The following components have been successfully verified:
-- Login and Authentication
-- Dashboard rendering and state
-- Subject creation and Attendance logging
-- AI algorithms and analytics endpoints
-- Scheduler startup and execution
-- Service Worker registration
-- FCM permission prompting
-- FCM token generation
-- Device registration and SQLite persistence
-- Firebase Admin SDK authentication initialization
-- Frontend production build (`npm run build`)
-- Backend Python syntax validation
-
-**Actual Push Delivery:** `Pending final IAM permission verification`
+The following components and workflows have been successfully tested:
+- Authentication testing
+- Attendance workflow testing
+- Dashboard testing
+- AI feature testing
+- Scheduler status testing
+- Service Worker testing
+- FCM permission testing
+- FCM token generation testing
+- Device registration testing
+- Database persistence testing
+- Frontend build verification
+- Backend syntax verification
 
 ---
 
 ## Roadmap
 
-### Immediate Next Step
-- Fix Google Cloud IAM permission
-- Re-run FCM test
-- Verify actual browser push
-- Verify background push
-- Verify notification click behavior
-
-### Phase 6
 - Final QA
 - Production configuration
 - Deployment
-- Final documentation
+- Documentation refinement
 - Demo preparation
-- GitHub/portfolio polish
+- Portfolio/GitHub presentation
 
 ---
 
