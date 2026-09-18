@@ -16,6 +16,23 @@
   <link rel="apple-touch-icon" href="/pwa-192x192.svg" />
   
   <title>Track75</title>
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('track75-theme') || localStorage.getItem('app-theme') || 'dark';
+        var isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.documentElement.style.colorScheme = 'dark';
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+          document.documentElement.style.colorScheme = 'light';
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>

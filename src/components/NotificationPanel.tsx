@@ -68,11 +68,11 @@ const TYPE_CONFIG: Record<string, {
     badgeDot: 'bg-emerald-500',
   },
   Info: {
-    icon: <Info className="w-5 h-5 text-indigo-500 shrink-0" />,
-    unreadBg: 'bg-indigo-50 dark:bg-indigo-950/20',
-    border: 'border-l-2 border-indigo-400 dark:border-indigo-500',
-    badge: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300',
-    badgeDot: 'bg-indigo-500',
+    icon: <Info className="w-5 h-5 text-[#38BDF8] shrink-0" />,
+    unreadBg: 'bg-[#38BDF8]/10',
+    border: 'border-l-2 border-[#38BDF8]',
+    badge: 'bg-[#38BDF8]/20 text-[#38BDF8]',
+    badgeDot: 'bg-[#38BDF8]',
   },
 };
 
@@ -116,11 +116,11 @@ const NotificationCard: React.FC<CardProps> = React.memo(({ notif, onMarkRead, o
     >
       <div
         className={`
-          p-3 sm:p-4 flex gap-3 relative
+          p-3 sm:p-3.5 flex gap-3 relative
           ${cfg.border}
-          ${isUnread ? cfg.unreadBg : 'bg-white dark:bg-slate-800'}
+          ${isUnread ? cfg.unreadBg : 'bg-white dark:bg-[#1E293B]'}
           ${isUnread ? 'cursor-pointer' : ''}
-          transition-colors hover:brightness-[0.97] dark:hover:brightness-110
+          transition-colors hover:brightness-[1.02] dark:hover:brightness-[1.05]
         `}
         onClick={handleMarkRead}
       >
@@ -132,21 +132,21 @@ const NotificationCard: React.FC<CardProps> = React.memo(({ notif, onMarkRead, o
 
           {/* Top row: title + time + delete */}
           <div className="flex items-start justify-between gap-2 mb-0.5">
-            <h4 className={`text-sm font-bold leading-snug flex-1 min-w-0 ${
-              isUnread ? 'text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300'
+            <h4 className={`text-xs sm:text-sm font-bold leading-snug flex-1 min-w-0 ${
+              isUnread ? 'text-slate-900 dark:text-[#F8FAFC]' : 'text-slate-600 dark:text-slate-300'
             }`}>
               {notif.title}
             </h4>
 
             {/* Time + delete — always visible on mobile */}
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 whitespace-nowrap">
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-[#94A3B8] whitespace-nowrap">
                 <Clock className="w-2.5 h-2.5" />
                 {timeLabel}
               </span>
               <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                className="p-1 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer transition-colors"
+                className="p-1 text-slate-400 hover:text-[#EF4444] hover:bg-[#EF4444]/10 rounded-lg cursor-pointer transition-colors"
                 title="Delete notification"
                 aria-label="Delete notification"
               >
@@ -157,7 +157,7 @@ const NotificationCard: React.FC<CardProps> = React.memo(({ notif, onMarkRead, o
 
           {/* Message */}
           <p className={`text-xs leading-relaxed mb-2 ${
-            isUnread ? 'text-slate-700 dark:text-slate-300 font-medium' : 'text-slate-500 dark:text-slate-400'
+            isUnread ? 'text-slate-700 dark:text-slate-200 font-medium' : 'text-slate-500 dark:text-[#94A3B8]'
           }`}>
             {notif.message}
           </p>
@@ -176,7 +176,7 @@ const NotificationCard: React.FC<CardProps> = React.memo(({ notif, onMarkRead, o
                   onActionClick(notif.action!, notif.related_subject_id);
                   onClose();
                 }}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-1 cursor-pointer transition-colors"
+                className="text-xs font-bold text-[#38BDF8] hover:text-[#0284C7] flex items-center gap-1 cursor-pointer transition-colors"
               >
                 {notif.action}
                 <ArrowRight className="w-3 h-3" />
@@ -187,7 +187,7 @@ const NotificationCard: React.FC<CardProps> = React.memo(({ notif, onMarkRead, o
 
         {/* Unread indicator dot */}
         {isUnread && (
-          <div className={`absolute top-3 right-2.5 w-2 h-2 rounded-full ${cfg.badgeDot} ring-2 ring-white dark:ring-slate-800`} />
+          <div className={`absolute top-3 right-2.5 w-2 h-2 rounded-full ${cfg.badgeDot} ring-2 ring-white dark:ring-[#1E293B]`} />
         )}
       </div>
     </div>
@@ -214,17 +214,17 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
       {/* Panel */}
       <div
-        className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-2xl z-50 animate-fade-in flex flex-col overflow-hidden"
+        className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#26354A] rounded-xl shadow-2xl z-50 animate-fade-in flex flex-col overflow-hidden"
         style={{ maxHeight: 'min(80vh, 560px)' }}
         id="notifications-dropdown-menu"
       >
         {/* Header */}
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800 shrink-0">
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-[#26354A] flex items-center justify-between bg-white dark:bg-[#1E293B] shrink-0">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Notifications</span>
+            <Bell className="w-4 h-4 text-slate-400" />
+            <span className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Notifications</span>
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-[10px] font-bold">
+              <span className="px-1.5 py-0.5 rounded-full bg-[#EF4444]/20 text-[#EF4444] text-[10px] font-bold">
                 {unreadCount} unread
               </span>
             )}
@@ -233,7 +233,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
           {unreadCount > 0 && (
             <button
               onClick={onMarkAllRead}
-              className="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 cursor-pointer transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold text-[#38BDF8] hover:text-[#0284C7] cursor-pointer transition-colors"
               title="Mark all as read"
             >
               <CheckCheck className="w-3.5 h-3.5" />
@@ -243,19 +243,19 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto no-scrollbar flex-1 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="overflow-y-auto no-scrollbar flex-1 bg-slate-50/60 dark:bg-[#0F172A]/40">
           {notifications.length === 0 ? (
-            <div className="px-4 py-14 text-center flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-3">
-                <CheckCircle className="w-6 h-6 text-emerald-500" />
+            <div className="px-4 py-12 text-center flex flex-col items-center justify-center">
+              <div className="w-10 h-10 bg-[#22C55E]/10 rounded-full flex items-center justify-center mb-2.5">
+                <CheckCircle className="w-5 h-5 text-[#22C55E]" />
               </div>
-              <span className="text-sm font-bold text-slate-800 dark:text-slate-200">You're all caught up!</span>
-              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[200px] mt-1">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">You're all caught up!</span>
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-[200px] mt-1">
                 No notifications right now.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+            <div className="divide-y divide-slate-100 dark:divide-[#26354A]/60">
               {notifications.map((notif) => (
                 <NotificationCard
                   key={notif.id}
@@ -271,8 +271,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-700 text-[10px] text-slate-400 dark:text-slate-500 font-semibold text-center bg-slate-50/30 dark:bg-slate-800/30 shrink-0">
-          Smart alerts powered by real-time attendance data
+        <div className="px-4 py-2 border-t border-slate-200 dark:border-[#26354A] text-[10px] text-slate-500 dark:text-[#94A3B8] font-semibold text-center bg-slate-50 dark:bg-[#1E293B] shrink-0">
+          Automated academic attendance alerts
         </div>
       </div>
     </>

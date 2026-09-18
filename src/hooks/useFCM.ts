@@ -26,6 +26,7 @@ export const useFCM = () => {
   // ── Helpers (defined first so all useEffects can safely reference them) ──
 
   const registerDeviceWithBackend = useCallback(async (token: string) => {
+    console.log("[FCM-9] Backend registration started");
     try {
       const authToken = localStorage.getItem('auth_token');
       if (!authToken) {
@@ -69,13 +70,15 @@ export const useFCM = () => {
       });
 
       const responseText = await response.text();
+      console.log(`[FCM-10] Backend registration response: ${response.status} - ${responseText}`);
       if (response.ok) {
         // registered successfully
       } else {
         console.error('[useFCM] Backend Registration FAILED. Status:', response.status, 'Body:', responseText);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[useFCM] Failed to register device token with backend:', err);
+      console.error("COMPLETE error object with stack trace:", err, err?.stack);
     }
   }, []);
 
@@ -131,6 +134,7 @@ export const useFCM = () => {
   // ── Public API ──
 
   const requestPermissionAndGetToken = async () => {
+    console.log("[FCM-2] requestPermissionAndGetToken started");
     if (!state.isSupported) {
       setState(s => ({ ...s, error: 'Push notifications are not supported by this browser.' }));
       return null;

@@ -1,22 +1,108 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
-/* Smooth color transitions for seamless theme toggles */
-html, body, #app-root-container, header, aside, main, footer, button, input, select, textarea, div, p, span, h1, h2, h3, h4, h5, h6, label, table, tr, th, td, border, svg {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 250ms;
+/* Centralized CSS Design Tokens / Variables */
+:root {
+  color-scheme: light;
+  --background: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-secondary: #F1F5F9;
+  --card: #FFFFFF;
+  --border: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  --primary: #0284C7;
+  --primary-light: #0EA5E9;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --gauge-track: #E2E8F0;
+
+  /* Backward-compatible aliases */
+  --app-bg: var(--background);
+  --app-surface: var(--surface);
+  --app-secondary: var(--surface-secondary);
+  --app-border: var(--border);
+  --app-border-subtle: var(--border-subtle);
+  --app-text: var(--text-primary);
+  --app-muted: var(--text-muted);
 }
 
-/* Scrollbar styling for dark mode */
-.dark ::-webkit-scrollbar {
+.dark {
+  color-scheme: dark;
+  --background: #0F172A;
+  --surface: #1E293B;
+  --surface-secondary: #172033;
+  --card: #1E293B;
+  --border: #26354A;
+  --border-subtle: rgba(38, 53, 74, 0.6);
+  --primary: #38BDF8;
+  --primary-light: #38BDF8;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --gauge-track: #0F172A;
+
+  /* Backward-compatible aliases */
+  --app-bg: var(--background);
+  --app-surface: var(--surface);
+  --app-secondary: var(--surface-secondary);
+  --app-border: var(--border);
+  --app-border-subtle: var(--border-subtle);
+  --app-text: var(--text-primary);
+  --app-muted: var(--text-muted);
+}
+
+body {
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for theme toggle */
+#app-root-container, header, aside, main, nav, .theme-transition {
+  transition-property: background-color, border-color, color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Circular Gauge Track */
+.gauge-track-circle {
+  stroke: var(--gauge-track);
+  transition: stroke 200ms ease;
+}
+
+/* Light Scrollbar */
+::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
+::-webkit-scrollbar-track {
+  background: var(--app-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Dark Scrollbar */
 .dark ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #0F172A;
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -25,5 +111,5 @@ html, body, #app-root-container, header, aside, main, footer, button, input, sel
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #1e293b;
+  background: #1E293B;
 }

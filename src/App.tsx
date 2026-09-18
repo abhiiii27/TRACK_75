@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, GraduationCap, AlertCircle, Plus, WifiOff } from 'lucide-react';
-import { Subject, PredictionResult, AIPredictionResponse, AIRecommendationResponse } from './types';
+import { Subject, PredictionResult, AIPredictionResponse, AIRecommendationResponse, Notification, NotificationListResponse } from './types';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import BottomNav from './components/BottomNav';
@@ -8,6 +8,7 @@ import DashboardView from './components/DashboardView';
 import SubjectsView from './components/SubjectsView';
 import PredictorView from './components/PredictorView';
 import AnalyticsView from './components/AnalyticsView';
+import AlertsView from './components/AlertsView';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
 import AddSubjectModal from './components/AddSubjectModal';
@@ -98,6 +99,62 @@ export default function App() {
       throw new Error('Your session has expired. Please sign in again.');
     }
     return res;
+  };
+
+  // --- NOTIFICATIONS STATE & SYNC ---
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
+
+  const fetchNotifications = useCallback(async () => {
+    const currentToken = token || localStorage.getItem('auth_token');
+    if (!currentToken) return;
+    try {
+      const res = await fetch('/api/notifications', {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
+      if (res.ok) {
+        const data: NotificationListResponse = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadAlertsCount(data.unreadCount || 0);
+      }
+    } catch {
+      // Ignore notifications network error
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications, notificationRefreshTrigger]);
+
+  const handleMarkNotificationRead = async (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, status: 'read' as const } : n))
+    );
+    setUnreadAlertsCount((prev) => Math.max(0, prev - 1));
+    try {
+      await authenticatedFetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+    } catch {
+      fetchNotifications();
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, status: 'read' as const })));
+    setUnreadAlertsCount(0);
+    try {
+      await authenticatedFetch('/api/notifications/read-all', { method: 'PUT' });
+    } catch {
+      fetchNotifications();
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await authenticatedFetch(`/api/notifications/${id}`, { method: 'DELETE' });
+    } catch {
+      fetchNotifications();
+    }
   };
 
   // Fetch initial data
@@ -561,6 +618,23 @@ export default function App() {
             analyticsData={analyticsData}
           />
         );
+      case 'alerts':
+        return (
+          <AlertsView
+            notifications={notifications}
+            onMarkRead={handleMarkNotificationRead}
+            onMarkAllRead={handleMarkAllNotificationsRead}
+            onDelete={handleDeleteNotification}
+            onActionClick={(action, subjectId) => {
+              if (subjectId) {
+                setViewingSubjectId(subjectId);
+                setActivePage('subjects');
+              } else {
+                setActivePage('subjects');
+              }
+            }}
+          />
+        );
       case 'profile':
         return (
           <ProfileView
@@ -574,6 +648,7 @@ export default function App() {
         return (
           <SettingsView
             onResetData={handleResetData}
+            onLogout={handleLogout}
           />
         );
       default:
@@ -596,7 +671,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans" id="app-root-container">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-[#0F172A] text-slate-900 dark:text-[#F8FAFC] font-sans" id="app-root-container">
       
       {/* Sidebar Navigation */}
       <Sidebar 
@@ -608,7 +683,7 @@ export default function App() {
       />
 
       {/* Main Layout Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0 relative bg-slate-50 dark:bg-[#0F172A]">
         <InstallPrompt />
         <ReloadPrompt />
         {/* Fixed Top Header Navigation */}
@@ -624,40 +699,40 @@ export default function App() {
         />
 
         {/* Scrollable Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 md:py-8 pb-24 md:pb-8 flex flex-col justify-between" id="app-main-content">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 pb-24 md:pb-8 flex flex-col justify-between bg-slate-50 dark:bg-[#0F172A]" id="app-main-content">
           
           {isOffline && (
-            <div className="mb-6 bg-slate-800/90 backdrop-blur-md border border-slate-700 text-slate-200 rounded-2xl p-4 flex items-center justify-center gap-3 text-sm font-medium shadow-lg animate-fade-in z-50 sticky top-0">
-              <WifiOff className="w-5 h-5 text-slate-400" />
+            <div className="mb-4 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#26354A] text-slate-900 dark:text-[#F8FAFC] rounded-xl p-3 flex items-center justify-center gap-2.5 text-xs font-medium shadow-md animate-fade-in z-50 sticky top-0">
+              <WifiOff className="w-4 h-4 text-slate-500 dark:text-[#94A3B8]" />
               <span>You are currently offline. Viewing cached data.</span>
             </div>
           )}
 
           <div>
             {error && (
-              <div className="mb-6 bg-amber-50 border border-amber-100 text-amber-800 rounded-2xl p-4 flex items-center justify-between text-xs font-semibold shadow-xs animate-fade-in" id="error-alert-banner">
+              <div className="mb-4 bg-amber-950/40 border border-amber-800/60 text-amber-200 rounded-xl p-3.5 flex items-center justify-between text-xs font-medium shadow-xs animate-fade-in" id="error-alert-banner">
                 <span className="flex items-center gap-2">
-                  <AlertCircle className="w-4.5 h-4.5 text-amber-500 shrink-0" />
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
                   {error}
                 </span>
-                <button onClick={() => fetchData()} className="text-indigo-600 hover:text-indigo-800 underline cursor-pointer">Retry Now</button>
+                <button onClick={() => fetchData()} className="text-[#38BDF8] hover:underline cursor-pointer">Retry</button>
               </div>
             )}
 
             {/* Render Active View Stage */}
             {loading && subjects.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center space-y-4">
-                <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
-                <span className="text-xs font-semibold text-slate-400">Loading student dashboards...</span>
+              <div className="h-64 flex flex-col items-center justify-center space-y-3">
+                <RefreshCw className="w-6 h-6 text-[#38BDF8] animate-spin" />
+                <span className="text-xs font-medium text-slate-500 dark:text-[#94A3B8]">Loading attendance records...</span>
               </div>
             ) : (
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activePage}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                 >
                   {renderActiveView()}
                 </motion.div>
@@ -665,18 +740,19 @@ export default function App() {
             )}
           </div>
 
-          {/* Footer Branding Area (Displays inside scroll container) */}
-          <footer className="mt-12 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center text-[10px] text-slate-400 dark:text-slate-500 font-bold gap-3" id="app-footer-branding">
-            <span>Student Attendance Planner &copy; 2026. All rights reserved.</span>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-indigo-600 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors">Terms of Use</a>
-            </div>
+          {/* Footer Branding Area (Desktop only) */}
+          <footer className="mt-10 pt-5 border-t border-slate-200 dark:border-[#26354A] hidden md:flex justify-between items-center text-[10px] text-slate-500 dark:text-[#94A3B8] font-medium" id="app-footer-branding">
+            <span>Track75 Attendance Intelligence &copy; 2026.</span>
+            <span>All registers encrypted and stored securely.</span>
           </footer>
         </main>
 
         {/* Mobile Bottom Tab Navigation */}
-        <BottomNav activePage={activePage} setActivePage={setActivePage} />
+        <BottomNav 
+          activePage={activePage} 
+          setActivePage={setActivePage} 
+          unreadAlertsCount={unreadAlertsCount}
+        />
 
       </div>
 

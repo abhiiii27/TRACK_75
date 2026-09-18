@@ -22,7 +22,10 @@ def initialize_firebase():
                 cred = credentials.Certificate(cred_path)
             else:
                 # Fallback to local dev path if standard env var is missing
-                local_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'firebase-adminsdk.json')
+                # Use abspath to ensure reliable resolution regardless of working directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                fastapi_dir = os.path.dirname(current_dir)
+                local_path = os.path.join(fastapi_dir, 'firebase-adminsdk.json')
                 if os.path.exists(local_path):
                     cred = credentials.Certificate(local_path)
                 else:
@@ -105,11 +108,20 @@ class NotificationService:
                 data=data,
                 tokens=tokens,
             )
+            
+            print("[FCM-DELIVERY] Firebase configured = True")
+            print(f"[FCM-DELIVERY] Token count = {len(tokens)}")
+            print("[FCM-DELIVERY] Sending multicast")
+            
             response = messaging.send_each_for_multicast(message)
+            
+            print(f"[FCM-DELIVERY] Success count = {response.success_count}")
+            print(f"[FCM-DELIVERY] Failure count = {response.failure_count}")
             
             successful_devices = []
             failed_devices = []
             deactivated_tokens = []
+            errors = []
 
             for idx, resp in enumerate(response.responses):
                 token = tokens[idx]
@@ -119,7 +131,11 @@ class NotificationService:
                     failed_devices.append(token)
                     # Handle specific invalid token errors
                     err_code = resp.exception.code if resp.exception else "unknown"
-                    if err_code in ["registration-token-not-registered", "invalid-registration-token", "NOT_FOUND", "INVALID_ARGUMENT"]:
+                    err_msg = str(resp.exception) if resp.exception else "Unknown error"
+                    errors.append(err_msg)
+                    print(f"[FCM-DELIVERY] Error code = {err_code}")
+                    print(f"[FCM-DELIVERY] Error message = {err_msg}")
+                    if err_code in ["registration-token-not-registered", "invalid-registration-token", "NOT_FOUND", "INVALID_ARGUMENT", "SENDER_ID_MISMATCH", "PERMISSION_DENIED"]:
                         NotificationService.deactivate_invalid_token(db_session, token, err_code)
                         deactivated_tokens.append(token)
 
@@ -128,7 +144,8 @@ class NotificationService:
                 "failureCount": response.failure_count,
                 "successfulDevices": successful_devices,
                 "failedDevices": failed_devices,
-                "deactivatedTokens": deactivated_tokens
+                "deactivatedTokens": deactivated_tokens,
+                "error": " | ".join(errors) if errors else None
             }
         except Exception as e:
             logger.error(f"Multicast send error: {str(e)}")

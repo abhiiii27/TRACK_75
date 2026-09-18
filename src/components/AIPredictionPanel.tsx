@@ -37,75 +37,77 @@ export default function AIPredictionPanel({ predictionData }: AIPredictionPanelP
     : "text-slate-500 dark:text-slate-400";
 
   return (
-    <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs flex flex-col" id="dashboard-prediction-panel">
+    <div className="bg-white dark:bg-[#1E293B] rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-[#26354A] shadow-sm flex flex-col justify-between" id="dashboard-prediction-panel">
       
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6" id="prediction-panel-title">
-        <div className="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
-          <BrainCircuit className="w-6 h-6" />
-        </div>
-        <div>
-          <h3 className="text-base font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight">AI Prediction Engine</h3>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">Smart semester forecasting</p>
-        </div>
-      </div>
-
-      {/* Grid for core metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {/* Forecast */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/40 border border-slate-100/50 dark:border-[#334155]/50 flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Forecast</span>
-          <div className="flex items-end gap-1.5 mt-1">
-            <span className="text-2xl font-black text-slate-800 dark:text-[#F8FAFC] leading-none">
-              {predictionData.predictedPercentage.toFixed(1)}%
-            </span>
+      <div>
+        {/* Header */}
+        <div className="flex items-center gap-2.5 mb-4" id="prediction-panel-title">
+          <div className="p-2 bg-[#38BDF8]/10 text-[#38BDF8] rounded-lg">
+            <BrainCircuit className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">Attendance Projection</h3>
+            <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium">Trajectory forecast based on historical rate</p>
           </div>
         </div>
 
-        {/* Required Classes */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/40 border border-slate-100/50 dark:border-[#334155]/50 flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Req. Classes</span>
-          <div className="flex items-end gap-1.5 mt-1">
-            <span className="text-2xl font-black text-slate-800 dark:text-[#F8FAFC] leading-none">
-              {predictionData.requiredClasses}
-            </span>
-          </div>
-        </div>
-
-        {/* Trend */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/40 border border-slate-100/50 dark:border-[#334155]/50 flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Trend</span>
-          <div className="flex items-center gap-2 mt-1">
-            <div className={`p-1 rounded-md ${trendColorClass}`}>
-              <TrendIcon className="w-4 h-4" />
+        {/* Grid for core metrics */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3.5">
+          {/* Forecast */}
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1 block">Forecast</span>
+            <div className="flex items-end gap-1 mt-0.5">
+              <span className="text-xl font-black text-slate-900 dark:text-[#F8FAFC] leading-none">
+                {predictionData.predictedPercentage.toFixed(1)}%
+              </span>
             </div>
-            <span className="text-sm font-bold text-slate-800 dark:text-[#F8FAFC]">
-              {predictionData.attendanceTrend}
-            </span>
           </div>
-        </div>
 
-        {/* Confidence */}
-        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#1E293B]/40 border border-slate-100/50 dark:border-[#334155]/50 flex flex-col justify-between">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Confidence</span>
-          <div className="flex items-center gap-1.5 mt-1">
-            <Target className={`w-4 h-4 ${confColor}`} />
-            <span className={`text-sm font-bold ${confColor}`}>
-              {predictionData.confidenceScore}
-            </span>
+          {/* Required Classes */}
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1 block">Req. Classes</span>
+            <div className="flex items-end gap-1 mt-0.5">
+              <span className="text-xl font-black text-slate-900 dark:text-[#F8FAFC] leading-none">
+                {predictionData.requiredClasses}
+              </span>
+            </div>
+          </div>
+
+          {/* Trend */}
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1 block">Trend</span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className={`p-0.5 rounded ${trendColorClass}`}>
+                <TrendIcon className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC]">
+                {predictionData.attendanceTrend}
+              </span>
+            </div>
+          </div>
+
+          {/* Confidence */}
+          <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] flex flex-col justify-between">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1 block">Confidence</span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <Target className={`w-3.5 h-3.5 ${confColor}`} />
+              <span className={`text-xs font-bold ${confColor}`}>
+                {predictionData.confidenceScore}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* AI Insight Box */}
-      <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-indigo-500" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-            Dynamic Insight
+      {/* Insight Box */}
+      <div className="p-3 rounded-lg bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] mt-1">
+        <div className="flex items-center gap-1.5 mb-1">
+          <Sparkles className="w-3.5 h-3.5 text-[#38BDF8]" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+            Advisory Note
           </span>
         </div>
-        <p className="text-slate-600 dark:text-[#CBD5E1] text-xs font-semibold leading-relaxed">
+        <p className="text-slate-700 dark:text-slate-300 text-xs font-medium leading-relaxed">
           {predictionData.aiInsight}
         </p>
       </div>

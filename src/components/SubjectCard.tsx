@@ -52,53 +52,71 @@ export default function SubjectCard({ subject, onLogAttendance, onEdit, onDelete
 
   return (
     <div 
-      className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] flex flex-col justify-between transition-all duration-300 hover:shadow-md hover:border-slate-200 dark:hover:border-[#334155]/80 animate-fade-in"
+      className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-[#26354A] flex flex-col justify-between transition-all hover:border-slate-300 dark:hover:border-[#334155] shadow-xs cursor-pointer"
       id={`subject-card-${subject.id}`}
+      onClick={() => onViewDetails && onViewDetails(subject.id)}
     >
       <div>
-        {/* Card Header */}
-        <div className="flex justify-between items-start mb-4" id={`subject-header-${subject.id}`}>
-          <div className="pr-2">
-            <h4 className="text-lg font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight leading-snug">{subject.name}</h4>
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">Target: {target}%</span>
+        {/* Top row: Subject Code + Full Name + Percentage + Status Pill + 3 dots */}
+        <div className="flex justify-between items-start mb-1" id={`subject-header-${subject.id}`}>
+          <div className="pr-2 min-w-0">
+            <h4 className="text-base font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight truncate">
+              {subject.name}
+            </h4>
+            <span className="text-xs text-slate-500 dark:text-[#94A3B8] font-normal block mt-0.5">
+              {subject.code || subject.name}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <span className={`text-xl font-extrabold ${isSafe ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                {currentPercentage.toFixed(1)}%
+
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-slate-900 dark:text-[#F8FAFC]">
+                {currentPercentage.toFixed(0)}%
+              </span>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                isSafe 
+                  ? 'bg-emerald-500/15 text-[#22C55E]' 
+                  : currentPercentage >= 70
+                  ? 'bg-amber-500/15 text-[#F59E0B]'
+                  : 'bg-rose-500/15 text-[#EF4444]'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  isSafe ? 'bg-[#22C55E]' : currentPercentage >= 70 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]'
+                }`} />
+                <span>{isSafe ? 'SAFE' : currentPercentage >= 70 ? 'WATCH' : 'AT RISK'}</span>
               </span>
             </div>
             
             {/* 3-Dot Action Menu */}
-            <div className="relative" ref={menuRef}>
+            <div className="relative" ref={menuRef} onClick={(e) => e.stopPropagation()}>
               <button 
                 onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#0F172A] transition-colors cursor-pointer"
                 aria-label="Options"
               >
-                <MoreVertical className="w-5 h-5" />
+                <MoreVertical className="w-4 h-4" />
               </button>
               
               {showMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1E293B] rounded-2xl shadow-xl border border-slate-100 dark:border-[#334155] py-2 z-10 animate-fade-in overflow-hidden origin-top-right">
+                <div className="absolute right-0 mt-1.5 w-44 bg-white dark:bg-[#1E293B] rounded-xl shadow-xl border border-slate-200 dark:border-[#26354A] py-1.5 z-20 overflow-hidden origin-top-right">
                   <button 
                     onClick={() => { setShowMenu(false); onViewDetails && onViewDetails(subject.id); }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center gap-2.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#0F172A] transition-colors cursor-pointer"
                   >
-                    <Info className="w-4 h-4 text-indigo-500" /> View Details
+                    <Info className="w-3.5 h-3.5 text-[#38BDF8]" /> View Details
                   </button>
                   <button 
                     onClick={() => { setShowMenu(false); onEdit && onEdit(subject); }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    className="w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center gap-2.5 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#0F172A] transition-colors cursor-pointer"
                   >
-                    <Edit2 className="w-4 h-4 text-emerald-500" /> Edit Subject
+                    <Edit2 className="w-3.5 h-3.5 text-[#22C55E]" /> Edit Subject
                   </button>
-                  <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
+                  <div className="h-px bg-slate-200 dark:bg-[#26354A] my-1"></div>
                   <button 
                     onClick={() => { setShowMenu(false); onDelete && onDelete(subject); }}
-                    className="w-full text-left px-4 py-3 text-sm font-semibold flex items-center gap-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                    className="w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center gap-2.5 text-[#EF4444] hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                   >
-                    <Trash2 className="w-4 h-4 text-rose-500" /> Delete Subject
+                    <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" /> Delete Subject
                   </button>
                 </div>
               )}
@@ -106,66 +124,58 @@ export default function SubjectCard({ subject, onLogAttendance, onEdit, onDelete
           </div>
         </div>
 
+        {/* Attendance Lecture Count & Clear Action Needed */}
+        <div className="flex items-center justify-between text-xs mb-2">
+          <span className="text-slate-500 dark:text-[#94A3B8]">
+            {subject.attended} / {subject.total} lectures
+          </span>
+          <span className={`text-[11px] font-semibold ${
+            isSafe 
+              ? 'text-emerald-600 dark:text-[#22C55E]' 
+              : currentPercentage >= 70 
+              ? 'text-amber-600 dark:text-[#F59E0B]' 
+              : 'text-rose-600 dark:text-[#EF4444]'
+          }`}>
+            {isSafe 
+              ? (safeToMiss > 0 ? `Can miss ${safeToMiss} class${safeToMiss === 1 ? '' : 'es'}` : `Target ${target}% reached`) 
+              : `Need ${requiredConsecutive} class${requiredConsecutive === 1 ? '' : 'es'} to reach ${target}%`
+            }
+          </span>
+        </div>
+
         {/* Progress Bar */}
-        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 mb-4 overflow-hidden" id={`subject-progress-container-${subject.id}`}>
+        <div className="w-full bg-slate-100 dark:bg-[#0F172A] rounded-full h-1.5 mb-3 overflow-hidden border border-slate-200 dark:border-[#26354A]/60" id={`subject-progress-container-${subject.id}`}>
           <div
             className={`h-full rounded-full transition-all duration-500 ease-out ${
-              isSafe ? 'bg-emerald-500' : 'bg-amber-500'
+              isSafe ? 'bg-[#22C55E]' : currentPercentage >= 70 ? 'bg-[#F59E0B]' : 'bg-[#EF4444]'
             }`}
             style={{ width: `${Math.min(100, currentPercentage)}%` }}
             id={`subject-progress-bar-${subject.id}`}
           />
         </div>
-
-        {/* Attendance Ratio Stats */}
-        <div className="flex justify-between text-xs text-slate-500 dark:text-[#CBD5E1] font-medium mb-5" id={`subject-ratio-${subject.id}`}>
-          <span>Attended: <strong className="text-slate-800 dark:text-[#F8FAFC]">{subject.attended}</strong></span>
-          <span>Conducted: <strong className="text-slate-800 dark:text-[#F8FAFC]">{subject.total}</strong></span>
-        </div>
-
-        {/* Smart Advisor Alert Box */}
-        <div className="mb-6" id={`subject-alert-box-${subject.id}`}>
-          {isSafe ? (
-            <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 rounded-2xl p-3 flex items-start gap-2 text-xs font-medium">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-              <div>
-                <span>You are above the target! You can safely miss </span>
-                <span className="font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">
-                  {safeToMiss} {safeToMiss === 1 ? 'class' : 'classes'}
-                </span>
-                <span> without falling below.</span>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-2xl p-3 flex items-start gap-2 text-xs font-medium">
-              <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <span>Under target! You must attend the next </span>
-                <span className="font-bold text-amber-900 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded animate-pulse">
-                  {requiredConsecutive} {requiredConsecutive === 1 ? 'class' : 'classes'}
-                </span>
-                <span> consecutively to secure {target}%.</span>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Quick Action Logging Buttons */}
-      <div className="grid grid-cols-2 gap-3 border-t border-slate-50 dark:border-[#334155] pt-4" id={`subject-actions-${subject.id}`}>
+      <div 
+        className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-[#26354A]/60" 
+        id={`subject-actions-${subject.id}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={() => onLogAttendance(subject.id, 'present')}
-          className="flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-[#1E293B] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400 text-slate-600 dark:text-[#CBD5E1] font-bold py-2.5 px-4 rounded-2xl text-xs transition-all duration-200 cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-1.5 h-9 bg-[#22C55E]/15 hover:bg-[#22C55E]/25 text-[#22C55E] font-bold rounded-xl text-xs transition-colors cursor-pointer border border-[#22C55E]/30"
           id={`btn-present-${subject.id}`}
         >
-          Mark Present
+          <Check className="w-3.5 h-3.5" />
+          <span>Present</span>
         </button>
         <button
           onClick={() => onLogAttendance(subject.id, 'absent')}
-          className="flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-[#1E293B] hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-400 text-slate-600 dark:text-[#CBD5E1] font-bold py-2.5 px-4 rounded-2xl text-xs transition-all duration-200 cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-1.5 h-9 bg-[#EF4444]/15 hover:bg-[#EF4444]/25 text-[#EF4444] font-bold rounded-xl text-xs transition-colors cursor-pointer border border-[#EF4444]/30"
           id={`btn-absent-${subject.id}`}
         >
-          Mark Absent
+          <X className="w-3.5 h-3.5" />
+          <span>Absent</span>
         </button>
       </div>
     </div>

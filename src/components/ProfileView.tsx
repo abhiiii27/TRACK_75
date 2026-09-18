@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { User, Settings, Mail, Save, LogOut } from 'lucide-react';
+import { 
+  User, 
+  Settings, 
+  Mail, 
+  Save, 
+  LogOut, 
+  Camera, 
+  ChevronRight, 
+  GraduationCap, 
+  Building, 
+  Calendar, 
+  Target,
+  Edit3,
+  X
+} from 'lucide-react';
 
 interface ProfileViewProps {
   stats: any;
@@ -9,7 +23,6 @@ interface ProfileViewProps {
 }
 
 export default function ProfileView({ stats, user, onUpdateGoal, onLogout }: ProfileViewProps) {
-  // Use state with prop fallback, then localStorage
   const [name, setName] = useState(() => user?.fullName || localStorage.getItem('profile_name') || 'Abhishek Buran');
   const [email, setEmail] = useState(() => user?.email || localStorage.getItem('profile_email') || 'abhishekburan47@gmail.com');
   const [rollNo, setRollNo] = useState(() => localStorage.getItem('profile_roll') || 'CSE-2026-084');
@@ -20,6 +33,8 @@ export default function ProfileView({ stats, user, onUpdateGoal, onLogout }: Pro
   
   const [isEditing, setIsEditing] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+
+  const initial = name.trim().charAt(0).toUpperCase() || 'A';
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,247 +65,316 @@ export default function ProfileView({ stats, user, onUpdateGoal, onLogout }: Pro
       onUpdateGoal(goal);
     }
 
-    setSaveMessage('Profile saved successfully! 🎉');
+    setSaveMessage('Profile updated successfully! 🎉');
     setIsEditing(false);
     setTimeout(() => setSaveMessage(''), 3000);
   };
 
   return (
-    <div className="space-y-8 animate-fade-in" id="profile-view-stage">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in max-w-2xl mx-auto" id="profile-view-stage">
       
-      {/* Title */}
-      <div>
-        <h2 className="text-xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
-          <User className="w-5 h-5 text-indigo-500" />
-          Student Profile & Preferences
-        </h2>
-        <p className="text-xs text-slate-400 dark:text-[#CBD5E1] font-medium">Manage academic credentials and customize attendance parameters</p>
+      {/* Header: Screen 8 style */}
+      <div className="flex items-center justify-between gap-3 pt-1 pb-1">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+          Profile
+        </h1>
+
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#26354A] border border-slate-200 dark:border-[#26354A] text-xs font-semibold text-[#38BDF8] transition-colors cursor-pointer"
+        >
+          {isEditing ? (
+            <>
+              <X className="w-3.5 h-3.5" />
+              <span>Cancel</span>
+            </>
+          ) : (
+            <>
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit</span>
+            </>
+          )}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" id="profile-layout-grid">
-        
-        {/* Left Column: Avatar & Quick Info Cards */}
-        <div className="lg:col-span-1 space-y-6" id="profile-left-column">
-          {/* Avatar Banner Card */}
-          <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 border border-slate-100 dark:border-[#334155] shadow-xs flex flex-col items-center text-center">
-            <div className="w-24 h-24 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center font-black text-2xl border border-indigo-100 dark:border-indigo-900/40 shadow-2xs relative">
-              {name.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'AB'}
-              <div className="absolute bottom-0 right-0 p-1.5 bg-emerald-500 text-white rounded-full border-4 border-white dark:border-[#1F2937]" />
-            </div>
+      {saveMessage && (
+        <div className="bg-[#22C55E]/15 border border-[#22C55E]/30 text-[#22C55E] rounded-xl p-3 text-xs font-semibold text-center animate-fade-in">
+          {saveMessage}
+        </div>
+      )}
 
-            <h3 className="text-lg font-black text-slate-800 dark:text-[#F8FAFC] mt-4 leading-snug">{name}</h3>
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{rollNo}</span>
-
-            <div className="w-full mt-6 pt-6 border-t border-slate-50 dark:border-[#334155] space-y-3.5 text-xs text-slate-500 dark:text-[#CBD5E1] font-semibold text-left">
-              <div className="flex justify-between">
-                <span className="text-slate-400 dark:text-slate-500">Status:</span>
-                <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md text-[10px]">Active Matriculate</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 dark:text-slate-500">Department:</span>
-                <span className="text-slate-700 dark:text-[#F8FAFC] truncate max-w-[150px]">{department}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 dark:text-slate-500">Current Semester:</span>
-                <span className="text-slate-700 dark:text-[#F8FAFC]">{semester}</span>
-              </div>
-            </div>
+      {/* Top Centered Avatar Area (Screen 8) */}
+      <div className="flex flex-col items-center justify-center pt-2 pb-2">
+        <div className="relative">
+          <div className="w-22 h-22 rounded-full bg-white dark:bg-[#1E293B] border-2 border-[#38BDF8]/40 flex items-center justify-center shadow-lg">
+            <span className="text-3xl font-black text-[#38BDF8] tracking-wider">{initial}</span>
           </div>
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#38BDF8] text-slate-950 flex items-center justify-center border-2 border-white dark:border-[#0F172A] shadow-xs cursor-pointer hover:bg-sky-400 transition-colors"
+            title="Edit Profile"
+          >
+            <Camera className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-          {/* Goals performance card */}
-          <div className="bg-gradient-to-br from-indigo-900 to-slate-950 text-white rounded-3xl p-6 shadow-xs relative overflow-hidden">
-            <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 w-32 h-32 bg-indigo-500/10 rounded-full blur-xl" />
-            
-            <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-widest block mb-2">Goal Metric Target</span>
-            <h4 className="text-xl font-bold leading-tight mb-2">Performance vs Attendance Goal</h4>
-            
-            <div className="mt-4 flex items-baseline gap-1">
-              <span className="text-3xl font-extrabold">{stats.overallPercentage}%</span>
-              <span className="text-xs text-slate-300">average / {goal}% target</span>
-            </div>
+        <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-[#F8FAFC] mt-3">
+          {name}
+        </h2>
+        <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] mt-0.5">
+          {rollNo}
+        </span>
+      </div>
 
-            <div className="mt-5 w-full bg-white/10 rounded-full h-2.5 overflow-hidden">
-              <div 
-                className="h-full bg-emerald-400 rounded-full transition-all duration-500" 
-                style={{ width: `${Math.min(100, (stats.overallPercentage / goal) * 100)}%` }} 
+      {/* If in edit mode, show the form */}
+      {isEditing ? (
+        <form onSubmit={handleSave} className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-[#26354A] space-y-4 shadow-xs">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC]">Edit Profile Details</h3>
+          
+          <div className="space-y-3 text-xs">
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
               />
             </div>
 
-            <p className="text-[10px] text-indigo-200 mt-3 font-semibold leading-relaxed">
-              {stats.overallPercentage >= goal 
-                ? '🎉 Excellent Standing! You are successfully meeting your desired attendance targets.' 
-                : '⚠️ Attendance Booster Needed. Attend upcoming classes to recover register targets.'
-              }
-            </p>
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">Roll Number</label>
+              <input
+                type="text"
+                value={rollNo}
+                onChange={(e) => setRollNo(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">Department</label>
+              <input
+                type="text"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">Semester</label>
+              <input
+                type="text"
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-500 dark:text-[#94A3B8] font-bold mb-1">College</label>
+              <input
+                type="text"
+                value={college}
+                onChange={(e) => setCollege(e.target.value)}
+                required
+                className="w-full bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-xl h-10 px-3 text-xs text-slate-900 dark:text-[#F8FAFC] font-semibold outline-hidden focus:border-[#38BDF8]"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-slate-500 dark:text-[#94A3B8] font-bold">Attendance Target</label>
+                <span className="text-[#38BDF8] font-bold">{goal}%</span>
+              </div>
+              <input
+                type="range"
+                min="50"
+                max="100"
+                value={goal}
+                onChange={(e) => setGoal(Number(e.target.value))}
+                className="w-full h-1.5 bg-slate-200 dark:bg-[#0F172A] rounded-lg appearance-none cursor-pointer accent-[#38BDF8]"
+              />
+            </div>
           </div>
 
-          {/* Logout Button */}
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] text-xs font-bold text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-2.5 rounded-xl bg-[#38BDF8] text-slate-950 text-xs font-bold hover:bg-sky-400 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          {/* Card 1: Academic Information (Screen 8) */}
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-[#26354A] overflow-hidden shadow-xs">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-[#26354A]/60">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
+                Academic Information
+              </h3>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-[#26354A]/60">
+              {/* Department */}
+              <div 
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#26354A]/30 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
+                    <GraduationCap className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] block">Department</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] truncate block">{department}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] shrink-0 ml-2" />
+              </div>
+
+              {/* Semester */}
+              <div 
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#26354A]/30 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] block">Semester</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] block">{semester}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] shrink-0 ml-2" />
+              </div>
+
+              {/* College */}
+              <div 
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#26354A]/30 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
+                    <Building className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] block">College / University</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] truncate block">{college}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] shrink-0 ml-2" />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Attendance Target (Screen 8) */}
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-[#26354A] p-4 sm:p-5 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-[#38BDF8]" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
+                  Attendance Target
+                </h3>
+              </div>
+              <span className="text-xs font-black text-[#38BDF8] bg-[#38BDF8]/15 px-2 py-0.5 rounded">
+                Target: {goal}%
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between pt-1">
+              <div>
+                <span className="text-2xl font-black text-slate-900 dark:text-[#F8FAFC]">{stats.overallPercentage}%</span>
+                <span className="text-xs text-slate-500 dark:text-[#94A3B8] ml-1.5 font-medium">Current Average</span>
+              </div>
+              <span className={`text-xs font-bold ${
+                stats.overallPercentage >= goal ? 'text-[#22C55E]' : 'text-[#EF4444]'
+              }`}>
+                {stats.overallPercentage >= goal 
+                  ? `+${(stats.overallPercentage - goal).toFixed(1)}% buffer`
+                  : `-${(goal - stats.overallPercentage).toFixed(1)}% deficit`
+                }
+              </span>
+            </div>
+
+            {/* Target Progress Bar */}
+            <div className="w-full bg-slate-100 dark:bg-[#0F172A] rounded-full h-2 overflow-hidden border border-slate-200 dark:border-[#26354A]">
+              <div 
+                className={`h-full rounded-full transition-all duration-500 ${
+                  stats.overallPercentage >= goal ? 'bg-[#22C55E]' : 'bg-[#EF4444]'
+                }`}
+                style={{ width: `${Math.min(100, (stats.overallPercentage / goal) * 100)}%` }} 
+              />
+            </div>
+          </div>
+
+          {/* Card 3: Account (Screen 8) */}
+          <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-slate-200 dark:border-[#26354A] overflow-hidden shadow-xs">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-[#26354A]/60">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
+                Account
+              </h3>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-[#26354A]/60">
+              <div 
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-[#26354A]/30 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[11px] text-slate-500 dark:text-[#94A3B8] block">Email Address</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-[#F8FAFC] truncate block">{email}</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#94A3B8] shrink-0 ml-2" />
+              </div>
+            </div>
+          </div>
+
+          {/* Sign Out Button (Red button as shown in reference) */}
           {onLogout && (
             <button
               onClick={onLogout}
-              className="w-full py-3.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/15 dark:hover:bg-rose-950/25 text-rose-700 dark:text-rose-400 border border-rose-100/60 dark:border-rose-900/30 font-bold rounded-2xl text-xs tracking-wide transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+              className="w-full py-3 bg-[#EF4444]/15 hover:bg-[#EF4444]/25 text-[#EF4444] border border-[#EF4444]/30 font-bold rounded-xl text-xs tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
               id="btn-profile-logout"
             >
-              <LogOut className="w-4.5 h-4.5" />
-              Sign Out of Account
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
             </button>
           )}
-        </div>
-
-        {/* Right Column: Information form fields */}
-        <div className="lg:col-span-2" id="profile-details-column">
-          <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 md:p-8 border border-slate-100 dark:border-[#334155] shadow-xs">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-base font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
-                <Settings className="w-5 h-5 text-indigo-500" />
-                Account & Academic Credentials Settings
-              </h3>
-              
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-slate-50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#334155] text-slate-700 dark:text-[#CBD5E1] font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                  id="btn-edit-profile"
-                >
-                  Edit Profile
-                </button>
-              )}
-            </div>
-
-            {saveMessage && (
-              <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/45 border border-emerald-100 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-400 rounded-2xl p-4 text-xs font-semibold animate-fade-in">
-                {saveMessage}
-              </div>
-            )}
-
-            <form onSubmit={handleSave} className="space-y-6" id="profile-settings-form">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* Full Name */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Student Name</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!isEditing}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                  />
-                </div>
-
-                {/* Email address */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Email Address</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      required
-                      disabled={!isEditing}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Roll Number */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Roll / Registration Number</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!isEditing}
-                    value={rollNo}
-                    onChange={(e) => setRollNo(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                  />
-                </div>
-
-                {/* Semester */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Current Academic Semester</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!isEditing}
-                    value={semester}
-                    onChange={(e) => setSemester(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                  />
-                </div>
-
-                {/* Department */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Academic Department</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!isEditing}
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                  />
-                </div>
-
-                {/* College */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">College / Institution</label>
-                  <input
-                    type="text"
-                    required
-                    disabled={!isEditing}
-                    value={college}
-                    onChange={(e) => setCollege(e.target.value)}
-                    className="bg-slate-50 dark:bg-[#1E293B] disabled:opacity-70 border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Attendance Target Goal slider */}
-              <div className="border-t border-slate-50 dark:border-[#334155] pt-6">
-                <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1]">Attendance Threshold Goal Target</label>
-                  <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-1 rounded-full">{goal}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="50"
-                  max="100"
-                  disabled={!isEditing}
-                  value={goal}
-                  onChange={(e) => setGoal(Number(e.target.value))}
-                  className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 disabled:opacity-60 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                />
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block mt-1">This threshold sets the target boundary for smart advisor warnings across all registers.</span>
-              </div>
-
-              {/* Form submit buttons */}
-              {isEditing && (
-                <div className="flex gap-3 justify-end pt-4 border-t border-slate-50 dark:border-[#334155]">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="px-5 py-3 bg-slate-50 dark:bg-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#334155] text-slate-600 dark:text-[#CBD5E1] font-bold rounded-2xl text-xs transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  
-                  <button
-                    type="submit"
-                    className="flex items-center gap-1.5 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs transition-all cursor-pointer shadow-xs"
-                    id="btn-save-profile"
-                  >
-                    <Save className="w-4 h-4" />
-                    Save Details
-                  </button>
-                </div>
-              )}
-            </form>
-          </div>
-        </div>
-
-      </div>
+        </>
+      )}
 
     </div>
   );

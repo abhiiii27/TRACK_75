@@ -1,5 +1,4 @@
 import React from 'react';
-import { BookOpen, CheckCircle, AlertTriangle, GraduationCap } from 'lucide-react';
 
 interface StatsProps {
   stats: {
@@ -13,125 +12,101 @@ interface StatsProps {
 }
 
 export default function DashboardStats({ stats }: StatsProps) {
-  const isSafe = stats.overallPercentage >= 75;
+  const percentage = stats.overallPercentage || 100;
+  const isSafe = percentage >= 75;
+  const buffer = Number((percentage - 75).toFixed(1));
+
+  // Circular gauge calculations (radius 44, circumference ~276.46)
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const clampedPercent = Math.min(100, Math.max(0, percentage));
+  const strokeDashoffset = circumference - (clampedPercent / 100) * circumference;
+
+  const strokeColor = isSafe ? '#22C55E' : percentage >= 70 ? '#F59E0B' : '#EF4444';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="dashboard-stats-grid">
-      {/* Overall Circular Progress Card */}
-      <div 
-        className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] flex flex-col items-center justify-center md:col-span-1 text-center animate-fade-in"
-        id="stat-card-circular"
-      >
-        <span className="text-xs font-semibold text-slate-400 dark:text-[#CBD5E1] uppercase tracking-wider mb-3">Overall Attendance</span>
-        <div className="relative w-32 h-32 flex items-center justify-center mb-2">
-          {/* Circular Track */}
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+    <div className="bg-white dark:bg-[#1E293B] rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-[#26354A] shadow-xs" id="dashboard-overall-attendance-card">
+      <span className="text-xs font-semibold text-slate-500 dark:text-[#94A3B8] block mb-3">
+        Overall Attendance
+      </span>
+
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Circular Attendance Gauge */}
+        <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+            {/* Background Track */}
             <circle
               cx="50"
               cy="50"
-              r="40"
-              stroke="currentColor"
-              strokeWidth="8"
+              r={radius}
               fill="transparent"
-              className="text-slate-100 dark:text-[#334155]"
+              strokeWidth="8"
+              className="gauge-track-circle"
             />
+            {/* Active Gauge Arc */}
             <circle
               cx="50"
               cy="50"
-              r="40"
-              stroke={isSafe ? "#10B981" : "#F59E0B"}
-              strokeWidth="8"
+              r={radius}
               fill="transparent"
-              strokeDasharray={`${2 * Math.PI * 40}`}
-              strokeDashoffset={`${2 * Math.PI * 40 * (1 - (stats.overallPercentage || 100) / 100)}`}
+              stroke={strokeColor}
+              strokeWidth="8"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
+              className="transition-all duration-700 ease-out"
             />
           </svg>
-          <div className="absolute text-center">
-            <span className="text-2xl font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight">
-              {stats.overallPercentage}%
-            </span>
-          </div>
-        </div>
-        <div className={`mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-          isSafe 
-            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400' 
-            : 'bg-amber-50 dark:bg-amber-950/45 text-amber-700 dark:text-amber-400'
-        }`}>
-          {isSafe ? 'Good Standing' : 'Needs Attendance Boost'}
-        </div>
-      </div>
 
-      {/* Stats Breakdown Cards */}
-      <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6" id="stats-breakdown-container">
-        {/* Total Classes Stats */}
-        <div 
-          className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] flex flex-col justify-between"
-          id="stat-card-classes"
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 rounded-2xl text-indigo-600 dark:text-indigo-400">
-              <CheckCircle className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-medium text-slate-400 dark:text-[#CBD5E1] bg-slate-50 dark:bg-[#1E293B] px-2 py-1 rounded-md">
-              Classes Logged
+          {/* Center Text in Gauge */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-none">
+              {percentage.toFixed(1)}%
             </span>
-          </div>
-          <div>
-            <h3 className="text-3xl font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight mb-1">
-              {stats.totalAttended} <span className="text-lg font-medium text-slate-400 dark:text-slate-500">/ {stats.totalConducted}</span>
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-[#CBD5E1] font-medium">Conducted lectures attended</p>
-          </div>
-        </div>
-
-        {/* Safe Subjects Card */}
-        <div 
-          className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] flex flex-col justify-between"
-          id="stat-card-safe-subjects"
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl text-emerald-600 dark:text-emerald-400">
-              <GraduationCap className="w-6 h-6" />
-            </div>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-1 rounded-md">
-              On Track
-            </span>
-          </div>
-          <div>
-            <h3 className="text-3xl font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight mb-1">
-              {stats.safeSubjects} <span className="text-sm font-semibold text-slate-400 dark:text-slate-500">/ {stats.totalSubjects}</span>
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-[#CBD5E1] font-medium">Subjects meeting goals</p>
-          </div>
-        </div>
-
-        {/* Shortage Alert Card */}
-        <div 
-          className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] flex flex-col justify-between"
-          id="stat-card-shortage"
-        >
-          <div className="flex justify-between items-start mb-4">
-            <div className={`p-3 rounded-2xl ${stats.belowTargetSubjects > 0 ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-[#1E293B] text-slate-400 dark:text-slate-500'}`}>
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <span className={`text-xs font-medium px-2 py-1 rounded-md ${
-              stats.belowTargetSubjects > 0 
-                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-400 animate-pulse' 
-                : 'bg-slate-50 dark:bg-[#1E293B] text-slate-500 dark:text-[#CBD5E1]'
+            <div className={`mt-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 ${
+              buffer >= 0 
+                ? 'bg-emerald-500/15 text-[#22C55E]' 
+                : 'bg-rose-500/15 text-[#EF4444]'
             }`}>
-              {stats.belowTargetSubjects > 0 ? 'Warning' : 'All Safe'}
+              <span>{buffer >= 0 ? `↑ +${buffer}%` : `↓ ${buffer}%`}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Status Pill & Key-Value List */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center space-y-2">
+          {/* Status pill */}
+          <div className="flex justify-end sm:justify-start">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+              isSafe
+                ? 'bg-emerald-500/15 text-[#22C55E] border border-emerald-500/30'
+                : 'bg-rose-500/15 text-[#EF4444] border border-rose-500/30'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isSafe ? 'bg-[#22C55E]' : 'bg-[#EF4444]'}`} />
+              <span>{isSafe ? 'Safe' : 'At Risk'}</span>
             </span>
           </div>
-          <div>
-            <h3 className="text-3xl font-extrabold text-slate-800 dark:text-[#F8FAFC] tracking-tight mb-1">
-              {stats.belowTargetSubjects}
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-[#CBD5E1] font-medium">Subjects below target %</p>
+
+          {/* Stats list */}
+          <div className="space-y-1 pt-1 text-xs">
+            <div className="flex items-center justify-between text-slate-500 dark:text-[#94A3B8]">
+              <span>Target</span>
+              <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">75%</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-[#94A3B8]">
+              <span>Current</span>
+              <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">{percentage.toFixed(1)}%</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-500 dark:text-[#94A3B8]">
+              <span>Attended</span>
+              <span className="font-semibold text-slate-900 dark:text-[#F8FAFC]">
+                {stats.totalAttended} / {stats.totalConducted}
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

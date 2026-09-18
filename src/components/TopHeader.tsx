@@ -125,13 +125,13 @@ const TopHeader = function TopHeader({
   // Map of keys to human-friendly page titles
   const getPageTitle = (key: string) => {
     switch (key) {
-      case 'dashboard':  return { title: 'Dashboard Workspace', subtitle: 'Academic Standing Overview' };
-      case 'subjects':   return { title: 'Tracked Subject Registers', subtitle: 'Detailed Class Log Books' };
-      case 'predictor':  return { title: 'AI Attendance Predictor', subtitle: 'Simulate Bunks and Study Quotas' };
-      case 'analytics':  return { title: 'Performance Analytics', subtitle: 'Charts, Ratios & Class Trajectory' };
-      case 'profile':    return { title: 'Student Profile Settings', subtitle: 'Customize Academic Goal Parameters' };
-      case 'settings':   return { title: 'System Settings', subtitle: 'Configure Alerts & Preferences' };
-      default:           return { title: 'Attendance Tracker', subtitle: 'Student Workspace' };
+      case 'dashboard':  return { title: 'Dashboard', subtitle: 'Overview & today\'s attendance standing' };
+      case 'subjects':   return { title: 'Subjects', subtitle: 'Course registers & class records' };
+      case 'predictor':  return { title: 'Attendance Predictor', subtitle: 'Simulate future attendance and bunk margins' };
+      case 'analytics':  return { title: 'Analytics', subtitle: 'Attendance trends & course ratios' };
+      case 'profile':    return { title: 'Profile Settings', subtitle: 'Semester & minimum target configuration' };
+      case 'settings':   return { title: 'Settings', subtitle: 'Preferences & device notifications' };
+      default:           return { title: 'Track75', subtitle: 'Attendance Tracker' };
     }
   };
 
@@ -140,64 +140,56 @@ const TopHeader = function TopHeader({
 
   return (
     <header
-      className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700/80 sticky top-0 z-40 h-16 shrink-0 flex items-center px-6 justify-between select-none"
+      className="bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#26354A] sticky top-0 z-40 h-14 sm:h-16 shrink-0 flex items-center px-4 sm:px-6 justify-between select-none shadow-xs"
       id="app-navigation-header"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Mobile Hamburger Toggle */}
         <button
           onClick={() => setIsOpenMobile(!isOpenMobile)}
-          className="md:hidden p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer flex items-center justify-center border border-slate-100 dark:border-slate-700"
+          className="md:hidden p-2 text-slate-500 dark:text-[#94A3B8] hover:text-sky-600 dark:hover:text-[#38BDF8] hover:bg-slate-100 dark:hover:bg-[#1E293B] rounded-lg transition-colors cursor-pointer flex items-center justify-center border border-slate-200 dark:border-[#26354A]"
           id="btn-mobile-sidebar-toggle-header"
           title="Toggle Navigation Menu"
         >
-          {isOpenMobile ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {isOpenMobile ? <X className="w-4 h-4 text-slate-900 dark:text-[#F8FAFC]" /> : <Menu className="w-4 h-4 text-slate-900 dark:text-[#F8FAFC]" />}
         </button>
 
-        {/* Brand Logo & Page Title */}
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
-            <GraduationCap className="w-4 h-4" />
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-sm font-black text-slate-900 dark:text-slate-50 tracking-tight leading-none mb-1 flex items-center gap-2">
-              {title}
-              <span className="hidden lg:inline text-[9px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                SaaS v1.5
-              </span>
-            </h1>
-            <p className="text-[10px] text-slate-400 dark:text-slate-400 font-semibold leading-none">{subtitle}</p>
-          </div>
+        {/* Page Title */}
+        <div className="flex flex-col">
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-tight">
+            {title}
+          </h1>
+          <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-normal leading-tight hidden xs:block">{subtitle}</p>
         </div>
       </div>
 
       {/* Right Side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Quick Add */}
         <button
           onClick={onAddSubject}
-          className="hidden sm:flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-all cursor-pointer shadow-2xs border border-indigo-600 hover:border-indigo-700 shrink-0"
+          className="flex items-center gap-1.5 bg-[#38BDF8] hover:bg-sky-400 text-slate-950 font-bold py-1.5 px-3 sm:px-3.5 rounded-xl text-xs transition-colors cursor-pointer shadow-xs shrink-0"
           id="header-btn-quick-add"
         >
-          <Plus className="w-3.5 h-3.5 text-white" />
-          <span>Add Subject</span>
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span className="hidden sm:inline">Add Subject</span>
         </button>
 
         {/* Notification Bell */}
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-center relative ${
+            className={`p-2 rounded-xl border transition-colors cursor-pointer flex items-center justify-center relative ${
               showNotifications
-                ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400'
-                : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50'
+                ? 'bg-sky-50 dark:bg-sky-500/15 border-sky-300 dark:border-sky-400 text-sky-600 dark:text-[#38BDF8]'
+                : 'bg-white dark:bg-[#1E293B] border-slate-200 dark:border-[#26354A] text-slate-500 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#26354A]'
             }`}
             id="btn-notifications-toggle"
             title="Notification Alerts"
           >
-            <Bell className="w-4.5 h-4.5" />
+            <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white animate-pulse">
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-[#EF4444] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white dark:border-[#0F172A]">
                 {badgeDisplay}
               </span>
             )}

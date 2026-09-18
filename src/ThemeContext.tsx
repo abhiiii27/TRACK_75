@@ -10,44 +10,55 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const STORAGE_KEY = 'track75-theme';
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('app-theme');
-    return (saved as Theme) || 'system';
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('app-theme');
+    return (saved as Theme) || 'dark';
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const getResolved = (t: Theme): 'light' | 'dark' => {
+    if (t === 'system') {
+      return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    }
+    return t;
+  };
+
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => getResolved(theme));
+
+  const applyThemeToDOM = (resolved: 'light' | 'dark') => {
+    const root = window.document.documentElement;
+    if (resolved === 'dark') {
+      root.classList.add('dark');
+      root.setAttribute('data-theme', 'dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.setAttribute('data-theme', 'light');
+      root.style.colorScheme = 'light';
+    }
+  };
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('app-theme', newTheme);
+    localStorage.setItem(STORAGE_KEY, newTheme);
+    const resolved = getResolved(newTheme);
+    setResolvedTheme(resolved);
+    applyThemeToDOM(resolved);
   };
 
   useEffect(() => {
-    const root = window.document.documentElement;
-
     const updateTheme = () => {
-      let activeTheme: 'light' | 'dark' = 'light';
-
-      if (theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        activeTheme = systemTheme;
-      } else {
-        activeTheme = theme;
-      }
-
+      const activeTheme = getResolved(theme);
       setResolvedTheme(activeTheme);
-
-      if (activeTheme === 'dark') {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
+      applyThemeToDOM(activeTheme);
     };
 
     updateTheme();
 
-    // Listen for system theme changes if theme is system
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const listener = () => updateTheme();

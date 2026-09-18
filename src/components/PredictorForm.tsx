@@ -36,32 +36,32 @@ export default function PredictorForm({ subjects, onPredict }: PredictorFormProp
   };
 
   return (
-    <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 shadow-xs border border-slate-100 dark:border-[#334155] h-full flex flex-col justify-between animate-fade-in" id="predictor-calculator-panel">
+    <div className="bg-white dark:bg-[#1E293B] rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-[#26354A] shadow-sm h-full flex flex-col justify-between animate-fade-in" id="predictor-calculator-panel">
       <div>
-        <div className="flex items-center gap-2 mb-6" id="predictor-panel-title">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl">
-            <TrendingUp className="w-5 h-5" />
+        <div className="flex items-center gap-2.5 mb-5" id="predictor-panel-title">
+          <div className="p-2 bg-[#38BDF8]/10 text-[#38BDF8] rounded-lg">
+            <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight">AI Attendance Predictor</h3>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Model future lecture schedules & risk levels</p>
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">Attendance Calculator</h3>
+            <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium">Model future lecture schedules & risk levels</p>
           </div>
         </div>
 
-        <form onSubmit={handleCalculate} className="space-y-5" id="predictor-form">
+        <form onSubmit={handleCalculate} className="space-y-4" id="predictor-form">
           {/* Subject Dropdown */}
           <div className="flex flex-col" id="predictor-subject-select">
-            <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Select Subject</label>
+            <label className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] mb-1.5">Select Course Register</label>
             <select
               value={selectedSubjectId}
               onChange={(e) => {
                 setSelectedSubjectId(e.target.value);
                 setPrediction(null); // Reset when subject changes
               }}
-              className="bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-medium text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all cursor-pointer"
+              className="bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-lg h-10 px-3 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] outline-hidden focus:border-[#38BDF8] transition-all cursor-pointer"
             >
               {subjects.map((sub) => (
-                <option key={sub.id} value={sub.id} className="dark:bg-[#1F2937] dark:text-[#F8FAFC]">
+                <option key={sub.id} value={sub.id} className="bg-white dark:bg-[#0F172A] text-slate-900 dark:text-[#F8FAFC]">
                   {sub.name} (Current: {sub.total > 0 ? ((sub.attended / sub.total) * 100).toFixed(1) : '100'}%)
                 </option>
               ))}
@@ -71,12 +71,12 @@ export default function PredictorForm({ subjects, onPredict }: PredictorFormProp
           {/* Upcoming Classes Slider */}
           <div className="flex flex-col" id="predictor-upcoming-slider">
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1]">Upcoming Classes</label>
-              <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Upcoming Classes</label>
+              <span className="text-xs font-bold text-[#38BDF8] bg-[#38BDF8]/15 px-2 py-0.5 rounded">
                 {upcomingClasses} lectures
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mb-2">Simulate attendance for next scheduled lectures</p>
+            <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium mb-2">Simulate attendance for next scheduled lectures</p>
             <input
               type="range"
               min="1"
@@ -86,19 +86,19 @@ export default function PredictorForm({ subjects, onPredict }: PredictorFormProp
                 setUpcomingClasses(Number(e.target.value));
                 setPrediction(null);
               }}
-              className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="w-full h-1.5 bg-slate-200 dark:bg-[#0F172A] rounded-lg appearance-none cursor-pointer accent-[#38BDF8]"
             />
           </div>
 
           {/* Expected Attendance Rate Slider */}
           <div className="flex flex-col" id="predictor-rate-slider">
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1]">Expected Attendance Rate</label>
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Expected Attendance Rate</label>
+              <span className="text-xs font-bold text-[#22C55E] bg-[#22C55E]/15 px-2 py-0.5 rounded">
                 {expectedRate}%
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mb-2">
+            <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium mb-2">
               {expectedRate === 100 ? 'I will attend every single class' : expectedRate >= 75 ? 'I plan to attend almost all' : 'I expect to miss a few'}
             </p>
             <input
@@ -111,59 +111,59 @@ export default function PredictorForm({ subjects, onPredict }: PredictorFormProp
                 setExpectedRate(Number(e.target.value));
                 setPrediction(null);
               }}
-              className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              className="w-full h-1.5 bg-slate-200 dark:bg-[#0F172A] rounded-lg appearance-none cursor-pointer accent-[#22C55E]"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading || !selectedSubjectId}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-2xl text-xs transition-all cursor-pointer shadow-xs"
+            className="w-full h-10 flex items-center justify-center gap-2 bg-[#38BDF8] hover:bg-[#0284C7] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-slate-950 font-bold px-4 rounded-xl text-xs transition-all cursor-pointer shadow-sm active:scale-[0.98]"
             id="btn-run-prediction"
           >
-            <Sparkles className="w-4 h-4" />
-            {loading ? 'Analyzing Trends...' : 'Calculate Projection'}
+            <Sparkles className="w-3.5 h-3.5" />
+            {loading ? 'Analyzing...' : 'Calculate Projection'}
           </button>
         </form>
       </div>
 
       {/* Prediction Output Results */}
-      <div className="mt-6 border-t border-slate-50 dark:border-[#334155] pt-6" id="predictor-result-panel">
+      <div className="mt-5 border-t border-slate-200 dark:border-[#26354A] pt-4" id="predictor-result-panel">
         {prediction ? (
-          <div className="space-y-4" id="prediction-result-view">
+          <div className="space-y-3" id="prediction-result-view">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1]">Projection Summary</span>
-              <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                prediction.status === 'safe' ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400' :
-                prediction.status === 'at_risk' ? 'bg-amber-50 dark:bg-amber-950/45 text-amber-700 dark:text-amber-400' :
-                'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400'
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Projection Summary</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                prediction.status === 'safe' ? 'bg-[#22C55E]/15 text-[#22C55E]' :
+                prediction.status === 'at_risk' ? 'bg-[#F59E0B]/15 text-[#F59E0B]' :
+                'bg-[#EF4444]/15 text-[#EF4444]'
               }`}>
                 {prediction.status === 'safe' ? 'Safe' :
                  prediction.status === 'at_risk' ? 'At Risk' : 'Critical'}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-[#1E293B]/40 rounded-2xl p-4">
-              <div className="text-center border-r border-slate-200/50 dark:border-[#334155]/50">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Current</span>
-                <span className="text-lg font-extrabold text-slate-700 dark:text-[#F8FAFC]">{prediction.currentPercentage}%</span>
+            <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-[#0F172A] rounded-lg p-3 border border-slate-200 dark:border-[#26354A]">
+              <div className="text-center border-r border-slate-200 dark:border-[#26354A]">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] block mb-0.5">Current</span>
+                <span className="text-base sm:text-lg font-black text-slate-900 dark:text-[#F8FAFC]">{prediction.currentPercentage}%</span>
               </div>
               <div className="text-center">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 block mb-0.5">Projected</span>
-                <span className={`text-lg font-extrabold ${prediction.predictedPercentage >= prediction.targetPercentage ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-[#94A3B8] block mb-0.5">Projected</span>
+                <span className={`text-base sm:text-lg font-black ${prediction.predictedPercentage >= prediction.targetPercentage ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
                   {prediction.predictedPercentage}%
                 </span>
               </div>
             </div>
 
-            <p className="text-xs font-medium text-slate-600 dark:text-[#CBD5E1] bg-slate-50 dark:bg-[#1E293B]/30 border border-slate-100 dark:border-[#334155]/50 rounded-2xl p-4 leading-relaxed">
+            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-lg p-3 leading-relaxed">
               {prediction.message}
             </p>
           </div>
         ) : (
-          <div className="text-center py-6 text-slate-400 dark:text-slate-500 flex flex-col items-center justify-center" id="prediction-result-placeholder">
-            <Info className="w-6 h-6 text-slate-300 dark:text-slate-600 mb-2" />
-            <span className="text-xs font-semibold">Adjust settings and click calculate to see models</span>
+          <div className="text-center py-5 text-slate-500 dark:text-[#94A3B8] flex flex-col items-center justify-center" id="prediction-result-placeholder">
+            <Info className="w-4 h-4 text-slate-400 dark:text-slate-500 mb-1" />
+            <span className="text-xs font-medium">Adjust parameters and click calculate to view simulation</span>
           </div>
         )}
       </div>

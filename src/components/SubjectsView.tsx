@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, Search, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Subject } from '../types';
 import SubjectCard from './SubjectCard';
 
@@ -12,123 +12,80 @@ interface SubjectsViewProps {
   onViewDetails?: (subjectId: string) => void;
 }
 
-export default function SubjectsView({ subjects, onLogAttendance, onAddSubject, onEditSubject, onDeleteSubject, onViewDetails }: SubjectsViewProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'on_track' | 'below_target'>('all');
+export default function SubjectsView({
+  subjects,
+  onLogAttendance,
+  onAddSubject,
+  onEditSubject,
+  onDeleteSubject,
+  onViewDetails,
+}: SubjectsViewProps) {
+  const [activeTab, setActiveTab] = useState<'current' | 'all'>('current');
+  const [searchQuery] = useState('');
 
-  // Filter subjects based on query and status selection
   const filteredSubjects = subjects.filter((sub) => {
     const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const percentage = sub.total > 0 ? (sub.attended / sub.total) * 100 : 100;
-    const isOnTrack = percentage >= sub.targetPercentage;
-
-    if (statusFilter === 'on_track') {
-      return matchesSearch && isOnTrack;
-    } else if (statusFilter === 'below_target') {
-      return matchesSearch && !isOnTrack;
-    }
     return matchesSearch;
   });
 
   return (
-    <div className="space-y-6 animate-fade-in" id="subjects-view-stage">
-      
-      {/* Title & Add Shortcut */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" id="subjects-view-header">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-[#F8FAFC] tracking-tight flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-500" />
-            Tracked Subjects Registers
-          </h2>
-          <p className="text-xs text-slate-400 dark:text-[#CBD5E1] font-medium">Log your daily attendance status and track required class goals</p>
-        </div>
+    <div className="space-y-4 animate-fade-in max-w-5xl mx-auto" id="subjects-view-stage">
+      {/* Top Header: "Subjects" + Blue Circle "+" button */}
+      <div className="flex justify-between items-center pt-1" id="subjects-view-header">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">
+          Subjects
+        </h1>
 
         <button
           onClick={onAddSubject}
-          className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-2xl text-xs transition-all cursor-pointer shadow-xs shrink-0"
+          className="w-8 h-8 rounded-full bg-[#38BDF8] hover:bg-sky-400 active:scale-95 text-slate-950 flex items-center justify-center font-bold shadow-sm transition-all cursor-pointer"
           id="subjects-btn-trigger-add"
+          title="Add Subject"
         >
-          <Plus className="w-4 h-4" />
-          Add New Subject
+          <Plus className="w-5 h-5 stroke-[2.5]" />
         </button>
       </div>
 
-      {/* Search & Filtering Navigation bar */}
-      <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-4 border border-slate-100 dark:border-[#334155] shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between" id="subjects-filters-bar">
-        
-        {/* Search Input Box */}
-        <div className="relative w-full sm:max-w-xs" id="search-box-wrapper">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search subjects..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-2xl py-2.5 pl-11 pr-4 text-xs font-semibold text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
-            id="subject-search-input"
-          />
-        </div>
-
-        {/* Filter Badges buttons */}
-        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar" id="status-filter-buttons">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest shrink-0 mr-1 hidden md:inline">
-            Filter Status:
-          </span>
-          <button
-            onClick={() => setStatusFilter('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              statusFilter === 'all' 
-                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs' 
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-[#F8FAFC] hover:bg-slate-50 dark:hover:bg-[#1E293B]'
-            }`}
-          >
-            All Registers ({subjects.length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('on_track')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              statusFilter === 'on_track' 
-                ? 'bg-emerald-600 text-white shadow-xs' 
-                : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-            }`}
-          >
-            On Track ({subjects.filter(s => (s.total > 0 ? (s.attended / s.total) * 100 : 100) >= s.targetPercentage).length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('below_target')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
-              statusFilter === 'below_target' 
-                ? 'bg-amber-600 text-white shadow-xs' 
-                : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-            }`}
-          >
-            Below Target ({subjects.filter(s => (s.total > 0 ? (s.attended / s.total) * 100 : 100) < s.targetPercentage).length})
-          </button>
-        </div>
+      {/* Filter Tabs: "Current" and "All" */}
+      <div className="flex items-center gap-2" id="subjects-filter-pills">
+        <button
+          onClick={() => setActiveTab('current')}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'current'
+              ? 'bg-[#38BDF8] text-slate-950'
+              : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] bg-slate-200/60 dark:bg-slate-800/60'
+          }`}
+        >
+          Current
+        </button>
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'all'
+              ? 'bg-[#38BDF8] text-slate-950'
+              : 'text-slate-600 dark:text-[#94A3B8] hover:text-slate-900 dark:hover:text-[#F8FAFC] bg-slate-200/60 dark:bg-slate-800/60'
+          }`}
+        >
+          All
+        </button>
       </div>
 
-      {/* Grid of Subject Cards */}
+      {/* List of Subject Cards */}
       {filteredSubjects.length === 0 ? (
-        <div className="bg-white dark:bg-[#1F2937] rounded-3xl border border-dashed border-slate-200 dark:border-[#334155] p-12 text-center flex flex-col items-center justify-center animate-fade-in" id="subjects-empty-state">
-          <div className="p-4 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 dark:text-indigo-400 rounded-full mb-4">
-            <BookOpen className="w-8 h-8" />
-          </div>
-          <h3 className="text-base font-bold text-slate-800 dark:text-[#F8FAFC] mb-1">No matching subjects found</h3>
-          <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mb-6 leading-relaxed">
-            Adjust your search keywords or state filters, or register another subject to continue.
+        <div className="bg-white dark:bg-[#1E293B] rounded-2xl border border-dashed border-slate-200 dark:border-[#26354A] p-10 text-center flex flex-col items-center justify-center animate-fade-in shadow-xs" id="subjects-empty-state">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-[#F8FAFC] mb-1">No subjects registered yet</h3>
+          <p className="text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mb-4">
+            Tap the + button above to register your semester subjects.
           </p>
-          {subjects.length === 0 && (
-            <button
-              onClick={onAddSubject}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-2xl text-xs transition-all cursor-pointer shadow-xs"
-            >
-              Register First Subject
-            </button>
-          )}
+          <button
+            onClick={onAddSubject}
+            className="bg-[#38BDF8] hover:bg-sky-400 text-slate-950 font-bold h-10 px-4 rounded-xl text-xs transition-all cursor-pointer shadow-sm"
+          >
+            Add Subject
+          </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="subjects-cards-grid">
+        <div className="space-y-3 sm:space-y-3.5" id="subjects-cards-list">
           {filteredSubjects.map((sub) => (
             <SubjectCard
               key={sub.id}
@@ -141,7 +98,6 @@ export default function SubjectsView({ subjects, onLogAttendance, onAddSubject, 
           ))}
         </div>
       )}
-
     </div>
   );
 }

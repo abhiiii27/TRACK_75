@@ -22,6 +22,7 @@ export const requestNotificationPermission = async (): Promise<NotificationPermi
 };
 
 export const getFCMToken = async (): Promise<string | null> => {
+  console.log("[FCM-3] getFCMToken started");
   if (!app) {
     console.warn("Firebase not configured properly.");
     return null;
@@ -39,20 +40,28 @@ export const getFCMToken = async (): Promise<string | null> => {
 
   try {
     const messaging = getMessaging(app);
+    console.log("[FCM-4] Firebase messaging initialized");
+    
     // VAPID key is required to receive push messages
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
     
     if (!vapidKey) {
       console.warn("VITE_FIREBASE_VAPID_KEY is missing from environment variables.");
+    } else {
+      console.log("[FCM-5] VAPID key present");
     }
 
     // Wait for the active Service Worker before requesting the token
     const registration = await navigator.serviceWorker.ready;
+    console.log("[FCM-6] Service Worker ready:", registration);
 
+    console.log("[FCM-7] Firebase getToken started");
     const currentToken = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,
     });
+    
+    console.log("[FCM-8] Firebase token generated:", currentToken ? "Yes" : "No");
     
     if (currentToken) {
       return currentToken;
@@ -60,8 +69,9 @@ export const getFCMToken = async (): Promise<string | null> => {
       console.warn("No FCM registration token available. Request permission to generate one.");
       return null;
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Firebase Exception: An error occurred while retrieving token: ", err);
+    console.error("COMPLETE error object with stack trace:", err, err?.stack);
     throw err; // Never silently return null
   }
 };

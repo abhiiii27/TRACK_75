@@ -49,14 +49,17 @@ export default function AddSubjectModal({ isOpen, onClose, onAdd }: AddSubjectMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 dark:bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in" id="add-subject-modal-overlay">
-      <div className="bg-white dark:bg-[#1F2937] rounded-3xl p-6 w-full max-w-md border border-slate-100 dark:border-[#334155] shadow-xl" id="add-subject-modal-container">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-fade-in" id="add-subject-modal-overlay">
+      <div className="bg-white dark:bg-[#1E293B] rounded-t-2xl sm:rounded-xl p-5 sm:p-6 w-full max-w-md border border-slate-200 dark:border-[#26354A] shadow-2xl" id="add-subject-modal-container">
         {/* Modal Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-slate-800 dark:text-[#F8FAFC] tracking-tight">Add New Subject</h3>
+        <div className="flex justify-between items-center mb-5">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F8FAFC] tracking-tight">Add Course Register</h3>
+            <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">Add a new subject to track and calculate margins</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-[#F8FAFC] p-1 bg-slate-50 dark:bg-[#1E293B] rounded-xl hover:bg-slate-100 dark:hover:bg-[#334155] transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-[#F8FAFC] p-1.5 bg-slate-100 dark:bg-[#0F172A] rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             id="btn-close-modal"
           >
             <X className="w-5 h-5" />
@@ -66,55 +69,55 @@ export default function AddSubjectModal({ isOpen, onClose, onAdd }: AddSubjectMo
         {/* Modal Form */}
         <form onSubmit={handleSubmit} className="space-y-4" id="add-subject-form">
           {error && (
-            <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/50 text-rose-800 dark:text-rose-400 rounded-2xl p-3 text-xs font-medium">
+            <div className="bg-[#EF4444]/15 border border-[#EF4444]/30 text-[#EF4444] rounded-lg p-2.5 text-xs font-medium">
               {error}
             </div>
           )}
 
           {/* Name */}
           <div className="flex flex-col">
-            <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Subject Name</label>
+            <label className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] mb-1.5">Subject / Course Name</label>
             <input
               type="text"
               required
-              placeholder="e.g. Data Structures"
+              placeholder="e.g. Data Structures & Algorithms"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-medium text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
+              className="bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-lg h-10 px-3 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] placeholder-slate-400 dark:placeholder-slate-500 outline-hidden focus:border-[#38BDF8] transition-all"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {/* Attended */}
             <div className="flex flex-col">
-              <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Classes Attended</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] mb-1.5">Classes Attended</label>
               <input
                 type="number"
                 min="0"
                 value={attended}
                 onChange={(e) => setAttended(Math.max(0, parseInt(e.target.value) || 0))}
-                className="bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-medium text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
+                className="bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-lg h-10 px-3 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] outline-hidden focus:border-[#38BDF8] transition-all"
               />
             </div>
 
             {/* Total Conducted */}
             <div className="flex flex-col">
-              <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1] mb-2">Total Conducted</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-[#94A3B8] mb-1.5">Total Conducted</label>
               <input
                 type="number"
                 min="0"
                 value={total}
                 onChange={(e) => setTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                className="bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#334155] rounded-2xl py-3 px-4 text-sm font-medium text-slate-700 dark:text-[#F8FAFC] outline-hidden focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 focus:border-indigo-400 dark:focus:border-indigo-800 transition-all"
+                className="bg-slate-50 dark:bg-[#0F172A] border border-slate-200 dark:border-[#26354A] rounded-lg h-10 px-3 text-xs font-medium text-slate-900 dark:text-[#F8FAFC] outline-hidden focus:border-[#38BDF8] transition-all"
               />
             </div>
           </div>
 
           {/* Target Percentage */}
           <div className="flex flex-col">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-slate-500 dark:text-[#CBD5E1]">Target Percentage</label>
-              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full">{target}%</span>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-xs font-bold text-slate-500 dark:text-[#94A3B8]">Target Percentage</label>
+              <span className="text-xs font-bold text-[#38BDF8] bg-[#38BDF8]/15 px-2 py-0.5 rounded">{target}%</span>
             </div>
             <input
               type="range"
@@ -122,14 +125,14 @@ export default function AddSubjectModal({ isOpen, onClose, onAdd }: AddSubjectMo
               max="100"
               value={target}
               onChange={(e) => setTarget(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="w-full h-1.5 bg-slate-200 dark:bg-[#0F172A] rounded-lg appearance-none cursor-pointer accent-[#38BDF8]"
             />
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1">Most universities require 75% minimum</span>
+            <span className="text-[10px] text-slate-500 dark:text-[#94A3B8] font-medium mt-1">Standard college requirement is 75% minimum</span>
           </div>
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-2xl text-xs transition-all cursor-pointer mt-2 shadow-xs"
+            className="w-full flex items-center justify-center gap-1.5 bg-[#38BDF8] hover:bg-[#0284C7] active:scale-[0.98] text-slate-950 font-bold h-11 px-4 rounded-xl text-xs transition-all cursor-pointer mt-2 shadow-sm"
             id="btn-add-subject-submit"
           >
             <Plus className="w-4 h-4" />

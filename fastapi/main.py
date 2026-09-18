@@ -27,6 +27,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from services import scheduler_service
+
+@app.on_event("startup")
+def startup_event():
+    scheduler_service.start_scheduler()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler_service.stop_scheduler()
+
+@app.get("/api/dev/scheduler-status")
+def get_scheduler_status():
+    return scheduler_service.get_status()
+
 # Custom exception handler to return 400 with {"error": "..."} for frontend compatibility
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(request, exc):
@@ -256,10 +270,6 @@ def log_attendance(log: schemas.AttendanceLog, db: Session = Depends(database.ge
     new_pct = (sub.attended / sub.total * 100) if sub.total > 0 else 0.0
 
     # Generate notifications after attendance is committed (non-blocking)
-    try:
-        generate_notifications(db, current_user)
-    except Exception:
-        pass  # Notification failures must never break attendance logging
 
     return {
         "message": f"Logged {log.status} for {sub.name}",
@@ -303,10 +313,6 @@ def update_attendance(record_id: str, update: schemas.AttendanceUpdate, db: Sess
     new_pct = (sub.attended / sub.total * 100) if sub.total > 0 else 0.0
 
     # Generate notifications after commit (non-blocking)
-    try:
-        generate_notifications(db, current_user)
-    except Exception:
-        pass
 
     return {
         "id": record.id,
@@ -1060,276 +1066,29 @@ def get_ai_recommendations(db: Session = Depends(database.get_db), current_user:
 
 # =============================================================================
 # Smart Notification Engine – Phase 5A
-# =============================================================================
-
-TYPE_PRIORITY = {"Critical": 0, "Warning": 1, "Success": 2, "Info": 3}
-
-def _upsert_notification(db: Session, user_id: str, dedup_key: str, n_type: str,
-                         category: str, title: str, message: str,
-                         action: str = None, related_subject_id: str = None):
-    """
-    Upsert a notification by dedup_key.
-    - If an unread/read notification with the same key exists → update title/message/updated_at/created_at.
-    - If a resolved notification exists → re-open it as unread with new content.
-    - Otherwise → insert new notification.
-    """
-    now = datetime.utcnow()
-    existing = (
-        db.query(models.Notification)
-        .filter(
-            models.Notification.user_id == user_id,
-            models.Notification.dedup_key == dedup_key,
-        )
-        .first()
-    )
-    if existing:
-        existing.type = n_type
-        existing.category = category
-        existing.title = title
-        existing.message = message
-        existing.action = action
-        existing.related_subject_id = related_subject_id
-        existing.updated_at = now
-        # Bump created_at so it rises to top of feed
-        existing.created_at = now
-        # Re-open if previously resolved
-        if existing.status == "resolved":
-            existing.status = "unread"
-    else:
-        notif = models.Notification(
-            user_id=user_id,
-            dedup_key=dedup_key,
-            type=n_type,
-            category=category,
-            title=title,
-            message=message,
-            action=action,
-            related_subject_id=related_subject_id,
-            status="unread",
-            created_at=now,
-            updated_at=now,
-        )
-        db.add(notif)
-
-
-def _resolve_notification(db: Session, user_id: str, dedup_key: str):
-    """Mark a notification as resolved if it exists and is not already resolved."""
-    existing = (
-        db.query(models.Notification)
-        .filter(
-            models.Notification.user_id == user_id,
-            models.Notification.dedup_key == dedup_key,
-        )
-        .first()
-    )
-    if existing and existing.status != "resolved":
-        existing.status = "resolved"
-        existing.updated_at = datetime.utcnow()
-
-
-def _enforce_retention(db: Session, user_id: str, max_count: int = 30):
-    """
-    Keep at most `max_count` notifications per user.
-    Deletion order: oldest READ → oldest RESOLVED → oldest INFO → oldest SUCCESS.
-    Never auto-delete unread Critical or Warning notifications.
-    """
-    total = db.query(models.Notification).filter(
-        models.Notification.user_id == user_id
-    ).count()
-
-    if total <= max_count:
-        return
-
-    to_delete = total - max_count
-
-    # Priority delete order (safe to auto-remove)
-    candidate_filters = [
-        (models.Notification.status == "read"),
-        (models.Notification.status == "resolved"),
-        (models.Notification.type == "Info", models.Notification.status == "unread"),
-        (models.Notification.type == "Success", models.Notification.status == "unread"),
-    ]
-
-    for conditions in candidate_filters:
-        if to_delete <= 0:
-            break
-        q = db.query(models.Notification).filter(
-            models.Notification.user_id == user_id
-        )
-        if isinstance(conditions, tuple):
-            for cond in conditions:
-                q = q.filter(cond)
-        else:
-            q = q.filter(conditions)
-
-        candidates = q.order_by(models.Notification.created_at.asc()).limit(to_delete).all()
-        for c in candidates:
-            db.delete(c)
-        to_delete -= len(candidates)
-
-
-def generate_notifications(db: Session, user: models.User):
-    """
-    Generate / update all notifications for `user` based on current SQLite data.
-    Called inside an isolated try/except so failures NEVER break other endpoints.
-    """
-    try:
-        subjects = db.query(models.Subject).filter(
-            models.Subject.owner_id == user.id
-        ).all()
-
-        # --- No subjects registered ---
-        if not subjects:
-            _upsert_notification(
-                db, user.id,
-                dedup_key="no_subjects",
-                n_type="Info",
-                category="System",
-                title="Welcome to Track75!",
-                message="Add your first subject to start tracking attendance and receiving smart alerts.",
-                action="Add Subject",
-            )
-            db.commit()
-            return
-
-        # If there are subjects now, resolve the no-subjects notice
-        _resolve_notification(db, user.id, "no_subjects")
-
-        # Per-subject analysis
-        for s in subjects:
-            pct = (s.attended / s.total * 100) if s.total > 0 else 100.0
-            target = s.target_percentage
-
-            safe_bunks = 0
-            if s.total > 0:
-                temp_total = s.total
-                temp_attended = s.attended
-                while True:
-                    new_pct = (temp_attended / (temp_total + 1)) * 100
-                    if new_pct < target:
-                        break
-                    temp_total += 1
-                    safe_bunks += 1
-                    if safe_bunks >= 50:
-                        break
-
-            # ---- Critical: below 65% ----
-            dedup_critical = f"critical:{s.id}"
-            dedup_warning  = f"warning:{s.id}"
-            dedup_low_safe = f"low_safe_bunks:{s.id}"
-            dedup_achieved = f"achieved:{s.id}"
-
-            if pct < 65:
-                classes_needed = 0
-                ta, tt = s.attended, s.total
-                while (ta / tt * 100) < target and classes_needed < 50:
-                    ta += 1; tt += 1; classes_needed += 1
-
-                _upsert_notification(
-                    db, user.id,
-                    dedup_key=dedup_critical,
-                    n_type="Critical",
-                    category="Attendance",
-                    title=f"Critical: {s.name} at {pct:.1f}%",
-                    message=f"Attendance is critically low. You need {classes_needed} consecutive classes to reach the {target}% target.",
-                    action="Open Subject",
-                    related_subject_id=s.id,
-                )
-                # Resolve warning if critical takes over
-                _resolve_notification(db, user.id, dedup_warning)
-                _resolve_notification(db, user.id, dedup_achieved)
-
-            elif pct < target:
-                # ---- Warning: below target but >= 65% ----
-                classes_needed = 0
-                ta, tt = s.attended, s.total
-                while tt > 0 and (ta / tt * 100) < target and classes_needed < 50:
-                    ta += 1; tt += 1; classes_needed += 1
-
-                _upsert_notification(
-                    db, user.id,
-                    dedup_key=dedup_warning,
-                    n_type="Warning",
-                    category="Attendance",
-                    title=f"Below Target: {s.name} at {pct:.1f}%",
-                    message=f"Attend {classes_needed} consecutive classes to reach your {target}% goal.",
-                    action="Open Subject",
-                    related_subject_id=s.id,
-                )
-                _resolve_notification(db, user.id, dedup_critical)
-                _resolve_notification(db, user.id, dedup_achieved)
-
-            else:
-                # ---- Subject is safe: resolve critical/warning ----
-                _resolve_notification(db, user.id, dedup_critical)
-                _resolve_notification(db, user.id, dedup_warning)
-
-                # ---- Success: achieved target ----
-                # Only upsert a success if there was a resolved critical/warning (recovery)
-                prev_critical = db.query(models.Notification).filter(
-                    models.Notification.user_id == user.id,
-                    models.Notification.dedup_key == dedup_critical,
-                    models.Notification.status == "resolved",
-                ).first()
-                prev_warning = db.query(models.Notification).filter(
-                    models.Notification.user_id == user.id,
-                    models.Notification.dedup_key == dedup_warning,
-                    models.Notification.status == "resolved",
-                ).first()
-                if prev_critical or prev_warning:
-                    _upsert_notification(
-                        db, user.id,
-                        dedup_key=dedup_achieved,
-                        n_type="Success",
-                        category="Achievement",
-                        title=f"Recovered: {s.name} is back to {pct:.1f}%!",
-                        message=f"Great work! Your attendance for {s.name} is now above the {target}% target.",
-                        action="Open Analytics",
-                    )
-
-            # ---- Warning: safe bunks running low (≤ 2) ----
-            if pct >= target and safe_bunks <= 2 and s.total >= 5:
-                _upsert_notification(
-                    db, user.id,
-                    dedup_key=dedup_low_safe,
-                    n_type="Warning",
-                    category="Attendance",
-                    title=f"Safe Bunks Low: {s.name}",
-                    message=f"Only {safe_bunks} safe bunk(s) remaining for {s.name}. Avoid missing classes.",
-                    action="Open Subject",
-                    related_subject_id=s.id,
-                )
-            elif safe_bunks > 2:
-                _resolve_notification(db, user.id, dedup_low_safe)
-
-        # ---- All subjects safe: overall success ----
-        all_safe = all(
-            (s.attended / s.total * 100) >= s.target_percentage if s.total > 0 else True
-            for s in subjects
-        )
-        if all_safe and len(subjects) > 0:
-            _upsert_notification(
-                db, user.id,
-                dedup_key="all_safe",
-                n_type="Success",
-                category="Achievement",
-                title="All Subjects Above Target 🎉",
-                message="You're in perfect standing across all subjects. Keep up the consistency!",
-                action="Open Analytics",
-            )
-        else:
-            _resolve_notification(db, user.id, "all_safe")
-
-        # Enforce retention policy
-        _enforce_retention(db, user.id, max_count=30)
-        db.commit()
-
-    except Exception as e:
-        db.rollback()  # Only rollback notifications, not other data
-        # Silently swallow – notifications must never break core features
-
 
 # --- Notification Routes ---
+
+from services.notification_engine import NotificationRuleEngine
+from services.ai_notification_service import AINotificationService
+
+@app.post("/api/notifications/generate", response_model=schemas.NotificationListResponse)
+def generate_ai_notifications(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    # 1. Fetch all subjects
+    subjects = db.query(models.Subject).filter(
+        models.Subject.owner_id == current_user.id
+    ).all()
+    
+    # 2. Rule Engine (Analyze & Generate Triggers)
+    triggers = NotificationRuleEngine.analyze_attendance(current_user, subjects)
+    
+    # 3. AI Service (Process triggers & Store)
+    generated = AINotificationService.process_triggers(db, current_user, triggers)
+    
+    return get_notifications(db=db, current_user=current_user)
 
 @app.get("/api/notifications", response_model=schemas.NotificationListResponse)
 def get_notifications(
@@ -1337,7 +1096,6 @@ def get_notifications(
     current_user: models.User = Depends(auth.get_current_user)
 ):
     # Generate/refresh notifications based on current state
-    generate_notifications(db, current_user)
 
     # Priority sort: Critical → Warning → Success → Info; newest first within same type
     type_order = {"Critical": 0, "Warning": 1, "Success": 2, "Info": 3}
@@ -1423,7 +1181,6 @@ def get_notifications(
     current_user: models.User = Depends(auth.get_current_user)
 ):
     # Generate/refresh notifications based on current state
-    generate_notifications(db, current_user)
 
     # Priority sort: Critical → Warning → Success → Info; newest first within same type
     type_order = {"Critical": 0, "Warning": 1, "Success": 2, "Info": 3}
@@ -1520,6 +1277,10 @@ def test_notification(
     ).all()
 
     tokens = [t.device_token for t in db_tokens]
+    
+    print(f"[DEBUG] current_user.id = {current_user.id}")
+    print(f"[DEBUG] database path = {db.bind.url}")
+    print(f"[DEBUG] active token count = {len(tokens)}")
 
     if not tokens:
         return {
@@ -1577,6 +1338,11 @@ def register_device(
         db_token.is_active = True
         db_token.last_seen = datetime.utcnow()
         db_token.updated_at = datetime.utcnow()
+        
+        print(f"[DEBUG] current_user.id = {current_user.id}")
+        print(f"[DEBUG] database path = {db.bind.url}")
+        print(f"[DEBUG] token saved = yes (updated)")
+        print(f"[DEBUG] is_active = {db_token.is_active}")
     else:
         db_token = models.DeviceToken(
             user_id=current_user.id,
@@ -1588,6 +1354,10 @@ def register_device(
             is_active=True
         )
         db.add(db_token)
+        print(f"[DEBUG] current_user.id = {current_user.id}")
+        print(f"[DEBUG] database path = {db.bind.url}")
+        print(f"[DEBUG] token saved = yes (new)")
+        print(f"[DEBUG] is_active = {db_token.is_active}")
 
     try:
         db.commit()
