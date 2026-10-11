@@ -238,7 +238,8 @@ Released under the **MIT License**. See `LICENSE` for details.
 
 ## Author
 
-**Abhishek**
+Github: https://github.com/abhiiii27
+Linkedin: https://www.linkedin.com/in/abhishekburan27
 
 <div align="center">
 
